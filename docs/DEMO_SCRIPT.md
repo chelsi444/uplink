@@ -20,6 +20,33 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ---
 
+## Half-length version (about 2½ minutes)
+
+Same setup and tabs. Cut: the courier-cancel re-plan, the live *Irreconcilable* run, most of the architecture detail, and the evidence walk-through. Kept: every judged term (Cisco Level 3, AGNTCY, ElevenLabs Scribe and v3, Claude), the argument, the dissent, the call, and escalation to a human.
+
+**0:00 · Sara** (Tab 2, ② the three agent cards)
+> We're Sara, Chelsi and Haatim, and this is **Uplink**. / Restaurants throw away good food every night because donating is a pile of tradeoffs: / the fast courier costs money, the volunteer might not show, and one shelter has waited **five days**. / We built this for **Cisco Outshift's** *When AI Agents Disagree*, **Level 3**.
+
+**0:20 · Chelsi** (Tab 1, Say it, Pizza My Heart)
+> A manager just **says** what's left. *(Tap the mic.)* "We've got **two** pepperoni pizzas, a **dozen** cookies and **five** bananas." `[PAUSE]` / **ElevenLabs Scribe** heard it, and **Claude** matched it to our menu, allergens included. *(Schedule → Confirm.)*
+
+**0:45 · Sara** (Tab 2 → Demo controls → **Majority with dissent** → Run)
+> Three agents with **competing goals**, and **no boss**. / **Speed** wants it there fast and reliably, **Cost** wants it cheap, **Need** wants whoever has waited longest, / and each has a **red line** it will veto. `[PAUSE: proposals stream in]` / Speed objects to the volunteer: only **50% reliable**. / Cost objects to paying fifteen dollars. / Round three: two of three agree, and Cost's objection stays **on the record**: a **majority with dissent**, not a forced consensus.
+
+**1:30 · Haatim** (point at ① Agent network while the call starts)
+> Every shelter, driver and negotiator is its **own process**, sixteen agents talking over **Cisco's AGNTCY**, **A2A** on **NATS**, each with an **OASF** record. / And **food safety** is never negotiated: unsafe plans are removed in code before any agent sees them.
+
+**1:50 · Chelsi** (③ Phone line; let 8–10 seconds play)
+> Then the **dispatcher agent calls the shelter agent**, in **ElevenLabs v3** voices. `[PAUSE: let it play]` / Only after the call does the driver set off. *(Point at ④–⑤ Delivery.)*
+
+**2:10 · Haatim** (click Evidence)
+> When the goals truly **can't** be reconciled, they **escalate to a human** with a decide-by deadline instead of forcing a deal. / And it works: on **100 unseen scenarios**, the team lost **93% less food** than the simple approach, and **67% less** than any agent alone.
+
+**2:30 · Sara**
+> **Uplink**: agents that disagree out loud, never compromise on safety, and ask a human when agreeing would be wrong. / Thank you.
+
+---
+
 ## Before you walk up (5 minutes earlier)
 
 1. App running from `~/uplink`; the terminal shows **Claude key OK**, **Voice: ElevenLabs** and **16 agents … AGNTCY A2A over NATS**. Then hide the terminal.

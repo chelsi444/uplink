@@ -1,6 +1,6 @@
 # Uplink: demo script for three speakers
 
-About **4¾ minutes**, plus optional extensions if you have time and a 2-minute cut if you don't. The key terms judges listen for are in **bold** in the lines and listed in the checklist at the end.
+About **2¾ minutes**, plus optional extensions if you have time and a 2-minute cut if you don't. The key terms judges listen for are in **bold** in the lines and listed in the checklist at the end.
 
 | Speaker | Owns | Drives the laptop during |
 | --- | --- | --- |
@@ -39,8 +39,6 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 > Hi, we're Sara, Chelsi and Haatim, and this is **Uplink**.
 >
-> Every night, restaurants in Santa Cruz throw away food that's **perfectly good**. / California's SB 1383 actually **requires** many of them to donate it. / But at closing time, donating is a pile of tradeoffs nobody has time for.
->
 > The **fast** courier costs money. / The **free** volunteer might not show up. / And the closest shelter might have already eaten today, while another one has waited **five days**.
 >
 > We built this for **Cisco Outshift's** challenge, ***When AI Agents Disagree***, at **Level 3**. / Food rescue is a problem where agents **should** disagree.
@@ -49,7 +47,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ---
 
-### 0:35 · Chelsi · The business side: just say it
+### 0:25 · Chelsi · The business side: just say it
 
 **On screen:** Tab 1, the customer site: "What's left over?", **Donating as: Pizza My Heart**, the **Say it** tab.
 
@@ -64,20 +62,16 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 **On screen:** the transcript appears, then the order: pizzas, cookies, bananas, with quantities and allergens.
 
 > **ElevenLabs Scribe**, their **speech-to-text** model, turned my voice into text, / and **Claude** matched it to *our own menu*, so the allergens come from our recipes, not a guess.
->
-> If I'd rather, I can snap a **photo**, or pan a short **video** over the counter, and Claude counts the food. / Or just tap items on the menu.
 
 *(The driver clicks **Schedule pickup**, then **Confirm pickup**.)*
 
 **On screen:** the pickup tracking page.
 
-> That's it. / That's everything a manager has to do. / Now, what happens **behind the scenes**?
-
 *(Switch to Tab 2.)*
 
 ---
 
-### 1:15 · Sara · The agents argue
+### 0:55 · Sara · The agents argue
 
 **On screen:** Tab 2, `/ops`. If Chelsi's pizza donation is already being negotiated, point at it: "there's our pizza." Otherwise go straight on.
 
@@ -86,24 +80,14 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 > *(Point at each card.)* **Speed** cares about getting food there fast, with a reliable driver. / **Cost** cares about money. / **Need** cares about one thing: whoever has waited **longest**.
 >
 > Each one's arguments are written by **Claude**, from **Anthropic**, / but each agent only sees the facts **its own goal** cares about, so it stays in character. / And each one has a **red line** it will not cross: cross it, and that agent **vetoes**.
->
-> Let me give them a **hard** case. / It's 6 PM, couriers have surge pricing, and there's only **one** volunteer left, across town.
 
 *(The driver: Demo controls → **Majority with dissent** → **Run scenario**.)*
 
 **On screen:** the current donation appears at the top. **② Negotiation** (top right) says "Agents are deliberating…" and proposals stream in one by one, while **① Agent network** (top left) lights up.
 
-`[PAUSE: let the first proposals appear, about 5 seconds]`
-
-> Watch them. / **Speed** wants the reliable paid courier. / **Cost** wants the free volunteer. / And **Need** wants Walnut Avenue, the shelter that's waited **five days**.
-
 **On screen:** objections appear in red.
 
 > Now they **object** to each other. / Speed says the volunteer is only **50% reliable**: "a no-show would spoil this food." / Cost says why pay **fifteen dollars** when a volunteer route is free.
-
-`[PAUSE: let round 2 stream]`
-
-> They don't just fold. / Each round, the bar to accept drops a little, so they give ground **slowly**, like people would. / And every proposal, objection and veto comes with its **reason**, right here. Nothing is hidden.
 
 **On screen:** the result: **"Majority 2 of 3 (Cost disagrees, kept on record)"**.
 
@@ -115,7 +99,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ---
 
-### 2:20 · Haatim · How it's built: real agents, real messages
+### 1:40 · Haatim · How it's built: real agents, real messages
 
 **On screen:** **① Agent network** (top left) lit up: business → shelter agents → driver agents → coordinators, with the **Message log** under it.
 
@@ -123,21 +107,19 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 >
 > They talk over **AGNTCY**, **Cisco Outshift's** open agent framework: / **A2A**, agent-to-agent messages, over **NATS**. / *(Point at the badge "AGNTCY · A2A over NATS · 16 agent processes".)* / Agents find each other through an **agent directory**, / and each one publishes an **A2A AgentCard** and an **OASF** record, AGNTCY's standard agent description. / If one agent goes down, it drops out, and the rest **carry on**.
 >
-> The business announces the food; / every shelter agent answers *yes*, *only part*, or *no*; / every driver agent **bids**, or refuses a trip that's too far; / and then the negotiators vote.
->
 > And one thing is **never** up for debate: **food safety**. / Code removes any plan without a fridge, with the wrong allergens, or that arrives too late, **before** any agent even sees it.
 
 *(Hand to Chelsi.)*
 
 ---
 
-### 2:55 · Chelsi · The phone call (ElevenLabs)
+### 2:00 · Chelsi · The phone call (ElevenLabs)
 
 **On screen:** scroll down to **③ Phone line** (bottom left): "Ringing…", then the dispatcher and the shelter talking, with the transcript filling in. The status pill at the top reads "Dispatcher calling · driver waits".
 
 > Once they decide, / a **dispatcher agent** calls the shelter. / Listen.
 
-`[PAUSE: let the whole call play, about 15 seconds. Don't talk over it.]`
+`[PAUSE: let about 8 seconds of the call play, then go on]`
 
 *(While the call plays, the driver quietly opens Demo controls and presses **Driver cancels**. A small note says the courier will cancel when the call ends. Don't mention it yet.)*
 
@@ -149,61 +131,27 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ---
 
-### 3:15 · Sara · New information: the courier cancels
-
-> But plans break. / The courier just **cancelled**.
-
-**On screen:** a red dashed line and ✕ where the courier was; the map line says "Rapid Courier A cancelled… Walnut Avenue still expects it". The agents deliberate again: "New information… only the transport is open."
-
-> That's **new information**, / and every agent re-argues with it. / Walnut Avenue already said **yes**, so nobody calls them again: / the agents only decide how to get the food **there**. / *(Point at the result.)* A new driver, / the same shelter, / decided by the same three agents. *(In our test runs they picked the free volunteer, all three agreeing; say what's on screen.)*
-
-**On screen:** the Phone line says **"No new call"**; Sam's route appears on the map.
-
-*(Hand to Haatim.)*
-
----
-
-### 3:35 · Haatim · When agents can't agree (the heart of Level 3)
-
-*(The driver scrolls back up; Demo controls → **Irreconcilable goals** → **Run scenario**.)*
-
-**On screen:** **② Negotiation** streams again; this time every agent's pick is blocked by the others, round after round.
-
-> Majority isn't always possible. / Here the goals **can't** be reconciled: / each agent's pick is blocked by the other two, round after round.
-
-**On screen:** the result: **"Asking a coordinator"**. A red badge appears on **Decisions**.
+### 2:15 · Haatim · When agents can't agree (the heart of Level 3)
 
 > So instead of forcing a bad deal, / they **stop**, and **escalate to a human**. / They do the same when the only compromise crosses someone's **red line**, / or when the decision depends on a fact nobody has confirmed, like *are there peanuts in this?*
 
-*(The driver clicks **Decisions**.)*
-
-**On screen:** the decision card with the options and **"Decide by"**.
-
 > The person gets the options, the agents' reasons, and a **decide-by** time, so the food never spoils waiting. / If nobody answers, the best-supported **safe** option goes.
-
-*(Click **Approve** on an option.)*
-
-> And like you saw with the courier, when the world changes, a shelter fills up, a driver cancels, / they **re-plan**, each one says whether it **changed its mind**, / and an agent that warned about an unreliable driver **gains vote weight**.
 
 ---
 
-### 4:15 · Haatim · Evidence
+### 2:30 · Haatim · Evidence
 
 *(The driver clicks the **Evidence** tab.)*
 
 **On screen:** Evidence: "93% less food lost", "67% less than the best single agent", "99 of 100".
 
-> Does arguing actually **help**? / We tested it on **100** random scenarios the system had **never seen**: driver no-shows, full shelters, new pantries.
->
-> Compared to the simple approach, nearest shelter and nearest driver, / the team lost **93% less** food.
->
 > And here's the part we're proudest of: / compared to **any one agent deciding alone**, / the team lost **67% less**. / Speed alone overspends. / Cost alone trusts volunteers who don't show. / Need alone takes risky trips.
 >
 > **Together, they veto each other's blind spots.**
 
 ---
 
-### 4:40 · Sara · Close
+### 2:40 · Sara · Close
 
 **On screen:** go back to the Live tab, showing the result and the agent cards.
 

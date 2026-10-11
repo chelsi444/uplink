@@ -1,6 +1,6 @@
 # Uplink: demo script for three speakers
 
-About **4 minutes**, plus optional extensions if you have time and a 2-minute cut if you don't.
+About **4½ minutes**, plus optional extensions if you have time and a 2-minute cut if you don't. The key terms judges listen for are in **bold** in the lines and listed in the checklist at the end.
 
 | Speaker | Owns | Drives the laptop during |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 >
 > The **fast** courier costs money. / The **free** volunteer might not show up. / And the closest shelter might have already eaten today, while another one has waited **five days**.
 >
-> Cisco asked us: *what happens when AI agents disagree?* / Food rescue is a problem where they **should**.
+> We built this for **Cisco Outshift's** challenge, ***When AI Agents Disagree***, at **Level 3**. / Food rescue is a problem where agents **should** disagree.
 
 *(Sara hands off with a look; the driver switches to Tab 1.)*
 
@@ -63,7 +63,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 **On screen:** the transcript appears, then the order: pizzas, cookies, bananas, with quantities and allergens.
 
-> **ElevenLabs Scribe** turned my voice into text, / and **Claude** matched it to *our own menu*, so the allergens come from our recipes, not a guess.
+> **ElevenLabs Scribe**, their **speech-to-text** model, turned my voice into text, / and **Claude** matched it to *our own menu*, so the allergens come from our recipes, not a guess.
 >
 > If I'd rather, I can snap a **photo**, or pan a short **video** over the counter, and Claude counts the food. / Or just tap items on the menu.
 
@@ -81,11 +81,11 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 **On screen:** Tab 2, `/ops`. If Chelsi's pizza donation is already being negotiated, point at it: "there's our pizza." Otherwise go straight on.
 
-> This is the operations view, where the AI agents work. / Here are three agents, and there is **no boss**.
+> This is the operations view, where the AI agents work. / Here are three agents with **competing goals**, and there is **no boss**: / **no central decision-maker**. The table only passes messages and counts votes.
 >
 > *(Point at each card.)* **Speed** cares about getting food there fast, with a reliable driver. / **Cost** cares about money. / **Need** cares about one thing: whoever has waited **longest**.
 >
-> And each one has a **red line** it will not cross.
+> Each one's arguments are written by **Claude**, from **Anthropic**, / but each agent only sees the facts **its own goal** cares about, so it stays in character. / And each one has a **red line** it will not cross: cross it, and that agent **vetoes**.
 >
 > Let me give them a **hard** case. / It's 6 PM, couriers have surge pricing, and there's only **one** volunteer left, across town.
 
@@ -103,13 +103,13 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 `[PAUSE: let round 2 stream]`
 
-> They don't just fold. / Each round, the bar to accept drops a little, so they give ground **slowly**, like people would.
+> They don't just fold. / Each round, the bar to accept drops a little, so they give ground **slowly**, like people would. / And every proposal, objection and veto comes with its **reason**, right here. Nothing is hidden.
 
 **On screen:** the result: **"Majority 2 of 3 (Cost disagrees, kept on record)"**.
 
 > Round three: Speed and Cost both move toward Need's shelter, from **opposite** sides. / Two of three agree, / and Cost's objection stays **on the record**.
 >
-> We don't force a consensus that isn't there.
+> We don't force a **consensus** that isn't there. / That's a **majority with dissent**.
 
 *(Hand to Haatim.)*
 
@@ -121,7 +121,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 > Everything you just watched is **real message passing**. / *(Point at the graph, then the message log under it.)* Every shelter, every driver, and each of the three negotiators is its **own agent**, / running as its **own process**: **sixteen** of them.
 >
-> They talk over **Cisco's AGNTCY** framework, / the **A2A** protocol on **NATS**. / *(Point at the badge "AGNTCY · A2A over NATS · 16 agent processes".)*
+> They talk over **AGNTCY**, **Cisco Outshift's** open agent framework: / **A2A**, agent-to-agent messages, over **NATS**. / *(Point at the badge "AGNTCY · A2A over NATS · 16 agent processes".)* / Agents find each other through an **agent directory**, / and each one publishes an **A2A AgentCard** and an **OASF** record, AGNTCY's standard agent description. / If one agent goes down, it drops out, and the rest **carry on**.
 >
 > The business announces the food; / every shelter agent answers *yes*, *only part*, or *no*; / every driver agent **bids**, or refuses a trip that's too far; / and then the negotiators vote.
 >
@@ -139,7 +139,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 `[PAUSE: let the whole call play, about 15 seconds. Don't talk over it.]`
 
-> Two agents, two **ElevenLabs** voices, with real pauses and emotion. / And the shelter's answer is its agent's **real** reply. / Shelter staff can also answer by **voice** from their phone.
+> Two agents, two voices from **ElevenLabs Eleven v3**, their most expressive **text-to-speech** model, with real pauses and emotion. / And the shelter's answer is its agent's **real** reply. / Shelter staff can also answer by **voice** from their phone.
 >
 > *Only* after the call does the driver set off.
 
@@ -151,9 +151,31 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ---
 
-### 3:25 · Haatim · Evidence
+### 3:25 · Haatim · When agents can't agree (the heart of Level 3)
 
-*(Optional extension A goes here if you have time: see below.)*
+*(The driver scrolls back up; Demo controls → **Irreconcilable goals** → **Run scenario**.)*
+
+**On screen:** **② Negotiation** streams again; this time every agent's pick is blocked by the others, round after round.
+
+> Majority isn't always possible. / Here the goals **can't** be reconciled: / each agent's pick is blocked by the other two, round after round.
+
+**On screen:** the result: **"Asking a coordinator"**. A red badge appears on **Decisions**.
+
+> So instead of forcing a bad deal, / they **stop**, and **escalate to a human**. / They do the same when the only compromise crosses someone's **red line**, / or when the decision depends on a fact nobody has confirmed, like *are there peanuts in this?*
+
+*(The driver clicks **Decisions**.)*
+
+**On screen:** the decision card with the options and **"Decide by"**.
+
+> The person gets the options, the agents' reasons, and a **decide-by** time, so the food never spoils waiting. / If nobody answers, the best-supported **safe** option goes.
+
+*(Click **Approve** on an option.)*
+
+> And when the world changes, a shelter fills up, a driver cancels, / they **re-plan**, each one says whether it **changed its mind**, / and an agent that warned about an unreliable driver **gains vote weight**.
+
+---
+
+### 4:05 · Haatim · Evidence
 
 *(The driver clicks the **Evidence** tab.)*
 
@@ -169,26 +191,17 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ---
 
-### 3:50 · Sara · Close
+### 4:30 · Sara · Close
 
 **On screen:** go back to the Live tab, showing the result and the agent cards.
 
-> So that's **Uplink**. / Agents with **competing goals**, / that disagree **out loud**, / never compromise on **safety**, / and ask a human when agreeing would be **wrong**.
+> So that's **Uplink**. / Agents with **competing goals** and **no boss**, / that disagree **out loud** over **AGNTCY**, / never compromise on **safety**, / and ask a human when agreeing would be **wrong**.
 >
 > Thank you. `[PAUSE]` We'd love your questions.
 
 ---
 
-## Optional extensions (add one or two if you have 5+ minutes)
-
-**A · When they can't agree (Haatim, 40 s, before Evidence).**
-*(Demo controls → **Irreconcilable goals** → Run.)* While it streams:
-> Sometimes the goals **can't** be reconciled. / Watch: each agent's pick is blocked by the other two, round after round.
-
-When "Asking a coordinator" appears, click **Decisions**:
-> Instead of forcing a bad deal, / they **stop** and ask a person, with options and a **decide-by** time, so the food never spoils waiting. / If nobody answers in time, the best-supported safe option goes.
-
-*(Click **Approve** on an option.)*
+## Optional extensions (add one or two if you have 6+ minutes)
 
 **B · The world changes (Sara, 30 s).** During any running scenario: *(Demo controls → **Shelter says full**.)*
 > A shelter just called: they're full. / The agents re-plan, / and each one tells us whether the news **changed its mind**. *(Point at "That changes my pick…".)*
@@ -210,7 +223,8 @@ When "Asking a coordinator" appears, click **Decisions**:
 | 0:50 | Sara | `/ops` → Majority with dissent | Name the three goals and red lines; narrate the objections; "Majority 2 of 3, dissent **on record**." |
 | 1:25 | Haatim | ① Agent network graph | "Sixteen agents, each its own process, on **AGNTCY** A2A over NATS. Safety is never negotiated." |
 | 1:40 | Chelsi | ③ Phone line | Let 5 seconds of the call play: "the dispatcher **calls** the shelter." |
-| 1:50 | Haatim | Evidence | "**82%** less food lost than the simple approach; **49%** less than any one agent alone." |
+| 1:45 | Haatim | Decisions (Irreconcilable already run) | "When they **can't** agree, they **escalate to a human** with a decide-by deadline." |
+| 1:52 | Haatim | Evidence | "**82%** less food lost than the simple approach; **49%** less than any one agent alone." |
 | 2:00 | Sara | Live | The closing line. |
 
 ---
@@ -227,6 +241,7 @@ Keep talking. The judges remember calm more than a glitch.
 | No sound | Chelsi | Read the call lines from the transcript; mention the voices are ElevenLabs. |
 | The app freezes | the driver | Hard refresh (Cmd+Shift+R). If it's still frozen, switch to the backup video. |
 | Ran out of time | Sara | Jump straight to the close. |
+| *Irreconcilable goals* ends in a majority instead (Claude can surprise you) | Haatim | "This time they found a majority. When they can't, they escalate like this:" Click **Decisions** and explain the card, or run **Unacceptable compromise** instead. |
 
 ## Who answers which question
 
@@ -236,3 +251,27 @@ Keep talking. The judges remember calm more than a glitch.
 - **Results, "does it cost more?"** → Haatim
 
 Ready-made answers are in `docs/DEMO_DAY.md`, section 5.
+
+---
+
+## Key terms checklist
+
+Make sure each of these is said out loud at least once. They're what the Cisco and ElevenLabs judges listen for.
+
+| Term | Who says it | Where |
+| --- | --- | --- |
+| Cisco Outshift, *When AI Agents Disagree*, Level 3 | Sara | opening |
+| competing goals, no boss / no central decision-maker | Sara | the agents argue |
+| red line, veto | Sara | the agents argue |
+| consensus vs **majority with dissent**, dissent on record | Sara | the result |
+| reasons shown for every proposal, objection and veto (transparency) | Sara | round 2 |
+| escalate to a human, decide-by deadline, safe fallback | Haatim | can't agree |
+| irreconcilable goals, compromise that crosses a red line, unconfirmed fact | Haatim | can't agree |
+| re-plan on new information, vote weight | Haatim | can't agree |
+| AGNTCY, A2A, NATS, 16 agent processes | Haatim | how it's built |
+| agent directory, A2A AgentCard, OASF record | Haatim | how it's built |
+| safety is never negotiated (rules in code, before any agent sees a plan) | Haatim | how it's built |
+| ElevenLabs Scribe (speech-to-text) | Chelsi | Say it |
+| ElevenLabs Eleven v3 (text-to-speech), dispatcher agent calls the shelter agent | Chelsi | the phone call |
+| Claude (Anthropic): menu matching, photo/video counting, each agent's arguments | Chelsi, Sara | Say it, the agents argue |
+| 82% less food lost than the baseline; 49% less than the best agent alone; 100 unseen scenarios | Haatim | evidence |

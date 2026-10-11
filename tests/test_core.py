@@ -166,7 +166,7 @@ def test_agents_never_lose_more_food_than_baseline_on_random_runs():
 
 def test_city_mode_combines_trips_and_beats_baseline():
     a, b = scenarios.run("city_rush", "agents"), scenarios.run("city_rush", "baseline")
-    assert len(a.donations) == 18 and a.done()
+    assert len(a.donations) >= 18 and a.done()   # 18 donated; counter-offers can split some in two
     assert any("rides along" in f["text"] for f in a.feed)
     assert a.metrics()["servings_lost"] <= b.metrics()["servings_lost"]
 
@@ -201,7 +201,7 @@ def test_shelter_agents_accept_counter_and_decline():
 def test_category_limit_shapes_the_offer():
     import network
     w = fresh()
-    d = w.add_donation(dict(PIZZA, servings=50), "campus-cafe")   # Harbor House serves at most 40 hot meals a day
+    d = w.add_donation(dict(PIZZA, servings=50), "campus-cafe")   # Housing Matters (harbor-house) serves at most 40 hot meals a day
     o = network.shelter_offer(w, w.nonprofits["harbor-house"], d)
     assert o["kind"] == "counter" and o["servings"] == 40
 
@@ -356,9 +356,184 @@ def test_shelter_can_answer_out_loud():
         voice.available = saved
 
 
+# ---------- menus ----------
+
+def test_menu_lines_become_one_donation_per_kind_of_food():
+    import menu
+    foods = menu.foods_from_lines("campus-cafe", [{"id": "campus-cafe-1", "qty": 2}, {"id": "campus-cafe-3", "qty": 12},
+                                                  {"id": "campus-cafe-2", "qty": 1}, {"id": "nope", "qty": 3}])
+    hot = next(f for f in foods if f["category"] == "hot prepared")
+    cold = next(f for f in foods if f["category"] == "cold prepared")
+    assert len(foods) == 2 and hot["servings"] == 24 and set(hot["allergens"]) == {"dairy", "gluten"}
+    assert cold["needs_cold"] and cold["servings"] == 12 and not cold["allergens_unverified"]
+
+
+def test_photo_items_on_the_menu_take_its_allergens():
+    import menu
+    f = menu.enrich({"items": ["pepperoni pizza (2 pizzas)"], "allergens": [], "category": "packaged",
+                     "allergens_unverified": True}, "campus-cafe")
+    assert f["menu_matches"] == 1 and f["category"] == "hot prepared" and set(f["allergens"]) == {"dairy", "gluten"}
+    assert f["allergens_unverified"] is False
+
+
+def test_add_menu_item_and_donate_from_menu():
+    import tempfile
+
+    import app
+    import menu
+    saved = menu.EXTRA
+    with tempfile.TemporaryDirectory() as tmp:
+        menu.EXTRA = os.path.join(tmp, "extra.json")
+        try:
+            app.state["world"] = World(live=True)
+            c = app.app.test_client()
+            item = c.post("/api/menu/campus-cafe", json={"name": "Vegetable soup", "category": "hot prepared",
+                                                          "serves": 4, "allergens": ["Celery"]}).get_json()["item"]
+            assert item["added"] and item["allergens"] == ["celery"]
+            assert any(m["name"] == "Vegetable soup" for m in c.get("/api/menu/campus-cafe").get_json()["items"])
+            r = c.post("/api/donate/menu", json={"business": "campus-cafe", "lines": [{"id": item["id"], "qty": 2}]}).get_json()
+            d = app.state["world"].get(r["ids"][0])
+            assert d["food"]["servings"] == 8 and d["food"]["allergens"] == ["celery"]
+            assert c.post("/api/donate/menu", json={"business": "campus-cafe", "lines": []}).status_code == 400
+        finally:
+            menu.EXTRA = saved
+
+
+def test_each_demo_scenario_shows_the_outcome_in_its_title():
+    """Guards the demo: a scenario named after an outcome must still produce it."""
+    want = {"majority_dissent": "majority", "unacceptable_compromise": "unacceptable", "irreconcilable": "irreconcilable",
+            "insufficient_evidence": "insufficient_evidence", "standoff": "unacceptable"}
+    for name, outcome in want.items():
+        w = World(copy.deepcopy(scenarios.SCENARIOS[name]), live=False)
+        for _ in range(40):
+            w.tick()
+        assert w.outcomes.get(outcome), (name, w.outcomes)
+
+
+def test_spoken_leftovers_fill_in_the_menu():
+    import app
+    import llm
+    saved = llm.available
+    llm.available = lambda: False   # the word-matching path, no AI needed
+    try:
+        c = app.app.test_client()
+        r = c.post("/api/voice/donation", data={"business": "corner-bakery",
+                   "text": "we have two dozen bagels and 12 croissants and 4 country loaves"}).get_json()
+        got = {ln["name"]: ln["qty"] for ln in r["lines"]}
+        assert got == {"Bagel": 24, "Croissant": 12, "Country loaf": 4}, got
+        r = c.post("/api/voice/donation", data={"business": "lakeside-hotel",
+                   "text": "two trays of campanella pasta and one quart of dream inn chowder"}).get_json()
+        assert {ln["name"]: ln["qty"] for ln in r["lines"]} == {"Campanella Pasta": 2, "Dream Inn Chowder": 1}
+        assert c.post("/api/voice/donation", data={"business": "campus-cafe"}).status_code == 400
+    finally:
+        llm.available = saved
+
+
+# ---------- AGNTCY ----------
+
+def test_every_agent_has_an_a2a_card_and_an_oasf_record():
+    import app
+    app.state["world"] = World(live=True)
+    r = app.app.test_client().get("/agntcy/records").get_json()
+    w = app.state["world"]
+    assert r["count"] == len(w.businesses) + len(w.nonprofits) + len(w.drivers) + 3   # + Speed, Cost, Need
+    rec = r["records"][0]
+    assert rec["schema_version"] and rec["modules"][0]["name"] == "integration/a2a"
+    card = rec["modules"][0]["data"]["card_data"]
+    assert card["name"].startswith("uplink/") and card["preferredTransport"] == "natspatterns"
+
+
+def test_agntcy_off_means_in_process_and_same_answers():
+    import agntcy_bridge
+    assert not agntcy_bridge.enabled()   # tests never need a NATS server
+    w = World(live=True)
+    d = w.add_donation(dict(PIZZA), "campus-cafe")
+    assert agntcy_bridge.offers(w, d, list(w.nonprofits.values())) is None   # caller falls back to in-process
+
+
+def test_new_information_opens_the_replan_and_each_agent_says_if_it_changed_its_mind():
+    w = World(copy.deepcopy(scenarios.SCENARIOS["volunteer_no_show"]), live=False)
+    for _ in range(60):
+        w.tick()
+    replans = [n for n in w.negotiations if n.get("new_info")]
+    assert replans, "a driver cancelled, so some negotiation should carry the new information"
+    first = replans[0]["rounds"][0]["messages"]
+    assert first[0]["type"] == "news" and "cancelled" in first[0]["text"]
+    assert {m["agent"] for m in first if m["type"] == "revise"} == {"Speed", "Cost", "Need"}
+    assert any(m["text"].startswith("That changes my pick") for m in first if m["type"] == "revise")
+
+
+def test_a_rejected_key_stops_ai_calls_and_falls_back():
+    import llm
+    saved = (llm._call, llm._auth_error, os.environ.get("ANTHROPIC_API_KEY"))
+    calls = []
+
+    class Unauthorized(Exception):
+        status_code = 401
+
+    def bad(*a, **k):
+        calls.append(1)
+        raise Unauthorized("invalid x-api-key")
+    os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test-0000"
+    llm._call, llm._auth_error = bad, None
+    try:
+        for _ in range(3):
+            try:
+                llm.chat_json("s", "u", retries=2)
+            except Exception:
+                pass
+        assert len(calls) == 1, "a 401 must not be retried or repeated"
+        assert llm.provider() is None and not llm.available() and "rejected" in llm.auth_error()
+    finally:
+        llm._call, llm._auth_error = saved[0], saved[1]
+        if saved[2] is None:
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+        else:
+            os.environ["ANTHROPIC_API_KEY"] = saved[2]
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
         t()
         print("ok ", t.__name__)
     print(f"\n{len(tests)} tests passed")
+
+
+# ---------- drivers are never stranded as "busy" ----------
+
+def test_driver_is_freed_after_a_reconsider_that_finds_nothing_better():
+    w = fresh()
+    d = w.add_donation(dict(PIZZA), "campus-cafe")
+    w.plan(d)
+    drv = d["plan"]["driver"]
+    d["reconsider"] = True
+    real = w.safe_plans
+    w.safe_plans = lambda *a, **k: []   # nothing better turns up
+    w.plan(d)
+    w.safe_plans = real
+    for _ in range(300):
+        w.tick(plan_inline=False)
+        if d["status"] == "delivered":
+            break
+    assert d["status"] == "delivered"
+    assert w.drivers[drv]["status"] == "free"
+
+
+def test_an_expired_donation_does_not_keep_its_driver_locked():
+    w = fresh()
+    d1 = w.add_donation(dict(PIZZA), "campus-cafe")
+    d1.update(locked_driver="maria", status="stuck", safe_until=w.now)
+    w.tick(plan_inline=False)
+    assert d1["status"] == "expired" and "locked_driver" not in d1
+    for x in w.drivers.values():
+        if x["id"] != "maria":
+            x["status"] = "off"
+    d2 = w.add_donation(dict(PIZZA), "campus-cafe")
+    w.plan(d2)
+    for _ in range(300):
+        w.tick(plan_inline=False)
+        if d2["status"] == "delivered":
+            break
+    assert d2["status"] == "delivered"
+    assert w.drivers["maria"]["status"] == "free"

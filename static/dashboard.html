@@ -1,11 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
+<script>try{var t=localStorage.getItem("uplink_theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Uplink · food rescue agents</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+<script src="/static/vendor/leaflet/leaflet.js"></script>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
 <link rel="stylesheet" href="/static/uplink.css">
 <link rel="stylesheet" href="/static/dashboard.css">
 </head>
@@ -24,6 +26,7 @@
           <a href="#/activity/feed"><b>Agent feed</b><small>Every event, newest first</small></a>
           <a href="#/activity/safety"><b>Safety log</b><small>Plans the rules allowed or blocked</small></a>
           <a href="#/activity/donations"><b>Donations</b><small>Status and time left for each</small></a>
+          <a href="#/activity/mesh"><b>Agent services</b><small>Each agent as its own process, live messages</small></a>
         </div>
       </div>
       <a href="#/evidence" data-route="evidence">Evidence</a>
@@ -50,8 +53,8 @@
             </div>
           </div>
           <div class="dd-sec">
-            <h3>Sound</h3>
-            <div class="dd-row"><button class="btn sm" id="voice" type="button" aria-pressed="false" title="Each agent speaks its lines in its own voice (ElevenLabs; the browser's voice without a key)">Voices off</button></div>
+            <h3>Sound and look</h3>
+            <div class="dd-row"><button class="btn sm" id="theme" type="button" title="Switch between dark and light (light is easier to read on some projectors)">Light mode</button><button class="btn sm" id="voice" type="button" aria-pressed="false" title="Each agent speaks its lines in its own voice (ElevenLabs; the browser's voice without a key)">Voices off</button></div>
           </div>
           <div class="dd-sec">
             <h3>Inject a problem</h3>
@@ -70,6 +73,7 @@
         <div class="dd-menu" id="dd-open" hidden>
           <a href="/" target="_blank" rel="noopener"><b>Customer site ↗</b><small>What a business sees</small></a>
           <a href="/shelter" target="_blank" rel="noopener"><b>Shelter phone page ↗</b><small>Where a shelter answers</small></a>
+          <a href="/agntcy/records" target="_blank" rel="noopener"><b>Agent records (OASF) ↗</b><small>Every agent in AGNTCY's format</small></a>
         </div>
       </div>
       <div class="clock-box" title="Simulated time. One simulated minute is one real second at 1× speed."><span class="clock" id="clock">12:00</span><span class="badge-mode" id="mode" title="Agents: how the three agents reason (rules or an AI model). Vision: how photos are read.">…</span></div>
@@ -95,20 +99,43 @@
     <div class="kpi"><b data-k="cost">$0</b><span>spent on paid drivers</span></div>
   </div>
 
+  <div class="panel wire" aria-labelledby="wire-h">
+    <div class="panel-head"><h2 id="wire-h">Agent network <span class="sub-h">live messages for the current donation</span></h2><span class="wire-right"><span class="pill outline xport" id="xport" title="How the shelter and driver agents receive messages">in-process</span><span class="wire-stat" id="wire-stat"><i class="dot"></i>idle</span></span></div>
+    <div class="wire-body">
+      <svg id="wire" viewBox="0 0 1000 300" role="img" aria-label="Diagram of the business, shelter, driver and coordinator agents and the messages between them"></svg>
+      <div class="wire-side">
+        <div class="panel hero" id="hero-panel" hidden>
+          <div class="panel-head"><h2>Negotiation <span class="sub-h">three agents, no boss</span></h2></div>
+          <div id="neg"></div>
+          <details class="more" id="debate-more">
+            <summary>See the debate <span class="muted small">transcript, votes by round</span></summary>
+            <div class="more-body">
+              <div id="history" class="history"></div>
+              <div class="rounds" id="rounds" role="group" aria-label="Negotiation round"></div>
+              <div id="debate-body"></div>
+            </div>
+          </details>
+        </div>
+        <p class="wire-side-empty muted small">When a donation arrives, the three agents negotiate here.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel callp" aria-labelledby="call-h">
+    <div class="panel-head"><h2 id="call-h">Phone line <span class="sub-h">the dispatcher agent calls the chosen shelter</span></h2>
+      <span class="call-badges"><span class="pill outline">Voices: ElevenLabs Flash v2.5</span><span class="pill outline">Speech to text: ElevenLabs Scribe</span></span></div>
+    <div class="call-body">
+      <div class="call-card" id="call-card"><p class="call-idle">No call yet. When the agents choose a shelter, the dispatcher agent calls it here.</p></div>
+      <ol class="call-tx" id="call-tx" aria-live="polite" aria-label="Call transcript"></ol>
+    </div>
+  </div>
+
   <div class="live-grid">
     <div class="stack-col">
       <div class="panel" id="cur-don"></div>
-      <div class="panel hero" id="hero-panel" hidden>
-        <div class="panel-head"><h2>Negotiation <span class="sub-h">three agents, no boss</span></h2></div>
-        <div id="neg"></div>
-        <details class="more" id="debate-more">
-          <summary>See the debate <span class="muted small">transcript, votes by round</span></summary>
-          <div class="more-body">
-            <div id="history" class="history"></div>
-            <div class="rounds" id="rounds" role="group" aria-label="Negotiation round"></div>
-            <div id="debate-body"></div>
-          </div>
-        </details>
+      <div class="panel" aria-labelledby="log-h">
+        <div class="panel-head"><h2 id="log-h">Message log <span class="sub-h">every message between agents for this donation</span></h2></div>
+        <ol class="wire-log" id="wire-log" aria-label="Message log"></ol>
       </div>
     </div>
     <div class="panel map-panel">
@@ -141,6 +168,7 @@
     <a role="tab" href="#/activity/feed" data-tab="feed">Agent feed</a>
     <a role="tab" href="#/activity/safety" data-tab="safety">Safety log</a>
     <a role="tab" href="#/activity/donations" data-tab="donations">Donations</a>
+    <a role="tab" href="#/activity/mesh" data-tab="mesh">Agent services</a>
   </div>
   <div class="tabpanel" data-tabpanel="network">
     <div class="panel-head net-head"><p class="helper" style="margin:0">For the donation on the Live view.</p><span class="muted small" id="net-agents"></span></div>
@@ -160,12 +188,19 @@
   <div class="tabpanel" data-tabpanel="donations" hidden>
     <div class="panel"><div class="dons" id="dons"></div></div>
   </div>
+  <div class="tabpanel" data-tabpanel="mesh" hidden>
+    <p class="helper">Every shelter, driver and negotiator runs as its own process and is an AGNTCY A2A agent over NATS (HTTP if NATS isn't available). Each one registers in the agent directory and sends a heartbeat every 2 s. Stop one and it drops out of the directory; the rest carry on without it.</p>
+    <div id="mesh-sum" class="mesh-sum"></div>
+    <div class="panel"><div id="mesh-agents"></div></div>
+    <h2 class="sec-h">Messages between agents <span class="muted small">(newest first)</span></h2>
+    <div class="panel"><div id="mesh-trace"></div></div>
+  </div>
 </section>
 
 <!-- ================= EVIDENCE ================= -->
 <section class="view page" data-view="evidence" hidden>
   <div class="page-head"><div><h1 class="page-title">Evidence</h1>
-    <p class="page-sub">Agents together vs a simple baseline, on the same scenarios.</p></div>
+    <p class="page-sub">The team of agents vs a simple baseline and vs each agent deciding alone, on the same scenarios.</p></div>
     <button class="btn sm" id="rerun" type="button">Re-run comparison</button></div>
   <div id="takeaway"></div>
   <h2 class="sec-h">Impact in the current run</h2>
@@ -221,6 +256,15 @@
     <div class="panel"><h3>Simulated</h3><ul class="plain"><li>The city, the shelters and the drivers.</li><li>The clock: one minute is one second at 1× speed.</li><li>Driver movement along straight lines.</li><li>Events such as a full shelter, a no-show or a new pantry (triggered from Demo controls).</li></ul></div>
   </div>
   <p class="helper" style="margin-top:1rem">More detail: README.md and docs/ARCHITECTURE.md in the project.</p>
+
+  <h2 class="sec-h">Built with</h2>
+  <ul class="built">
+    <li><b>Claude API (Anthropic)</b><span>Reads the food in each photo, matched against the restaurant's menu, and, when AI reasoning is on, writes each agent's proposals, objections and votes. Safety rules and vote counting stay in plain code.</span></li>
+    <li><b>ElevenLabs</b><span>Flash v2.5 gives Speed, Cost, Need, the dispatcher and the shelter their own voices. Scribe turns a shelter's spoken answer into text the agents act on.</span></li>
+    <li><b>Cisco Outshift challenge</b><span>Built for "When AI Agents Disagree", Level 3: agents with competing goals, no central decision-maker, and clear rules for when to stop, keep disagreeing, or ask a person.</span></li>
+    <li><b>AGNTCY (Cisco Outshift)</b><span>With AGNTCY on, every shelter and driver agent is its own A2A agent on NATS, built with the AGNTCY app-sdk. A donation is announced with one A2A broadcast to the shelter agents, and trips go out in one broadcast to the driver agents. Every agent also has an A2A card and an OASF record (Open menu, Agent records).</span></li>
+    <li><b>NVIDIA Brev (optional)</b><span>The photo reader can also run on an open vision model (Qwen2.5-VL) on a Brev GPU instead of Claude. See docs/BREV_SETUP.md.</span></li>
+  </ul>
 </section>
 </main>
 

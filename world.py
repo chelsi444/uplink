@@ -2,13 +2,16 @@
 
 The agents are real; the world around them is simulated (1 tick = 1 minute).
 """
+import datetime
 import itertools
+import uuid
 import time
 import json
 import math
 import os
 
 import agents
+import agntcy_bridge
 import network
 from config import (COST_LIMIT, HANDOFF_MIN, HUMAN_TIMEOUT, JOIN_EXTRA_MIN, PHONE_ONLINE_SECONDS,
                     MIN_LOT, RELIABILITY_PENALTY, SAFETY_MARGIN, SHELTER_TIMEOUT, SPEED_KMH, START,
@@ -74,9 +77,12 @@ class World:
         self.donations = []
         self.feed, self.decisions, self.records = [], [], []
         self.weights = {a: 1.0 for a in agents.AGENTS}
+        self.mesh = None   # set by app.py when agents run as separate services (mesh/)
         self.impact = {"meals": 0, "lbs": 0.0, "cost": 0.0, "spoiled": 0, "escalations": 0, "orgs": set()}
         self.outcomes = {}         # how each negotiation ended (consensus, majority, urgent, ...)
         self.negotiation = None
+        self.live_rounds = None   # the debate so far, while agents are still deliberating (live demo only)
+        self.live_donation = None
         self.negotiations = []
         self.phones = {}              # nonprofit id -> last time its phone page checked in (real seconds)
         self.network = []             # agent-to-agent messages: announce, offers, bids, awards
@@ -85,6 +91,7 @@ class World:
         self.busy = False
         self._ids = itertools.count(1)
         self._neg_ids = itertools.count(1)
+        self.world_id = uuid.uuid4().hex[:8]   # a new world (scenario reset) restarts negotiation numbers
         if scenario:
             self.load_scenario(scenario)
 
@@ -219,34 +226,58 @@ class World:
                      f"{'Re-announcing' if d.get('announced') else 'Surplus'}: {f['servings']} servings of {', '.join(f['items'])}, "
                      f"safe until {hhmm(d['safe_until'])}. {len(ok)} shelters can safely take it.")
             d["announced"] = True
-        # each shelter agent answers from its own point of view
-        offers = {}
-        for n in ok:
-            o = network.shelter_offer(self, n, d)
-            offers[n["id"]] = o
-            if log:
-                self.net(d, n["name"], d["business_name"], o["kind"], o["reason"])
+        # each shelter agent answers from its own point of view: over AGNTCY (A2A over NATS, agntcy_bridge.py)
+        # when that's on, else as its own service (mesh/) when the mesh is on, else in-process
+        remote = agntcy_bridge.offers(self, d, ok) if (log and self.live) else None
+        if remote is not None:
+            offers = {n["id"]: remote[n["id"]] for n in ok}
+        elif self.mesh:
+            got = self.mesh.offers(self, d, ok)
+            removed += [(n, "its agent isn't answering") for n in ok if got[n["id"]] is None]
+            ok = [n for n in ok if got[n["id"]] is not None]
+            offers = {n["id"]: got[n["id"]] for n in ok}
+        else:
+            offers = {n["id"]: network.shelter_offer(self, n, d) for n in ok}
+        if log:
+            for n in ok:
+                self.net(d, n["name"], d["business_name"], offers[n["id"]]["kind"], offers[n["id"]]["reason"])
         ok = [n for n in ok if offers[n["id"]]["kind"] != "decline"]
-        # each driver agent bids on each trip
-        plans, late, refused = [], 0, 0
-        bids_by_driver = {}
+        # each driver agent bids on each trip that could still arrive safely
+        trips, late = [], 0
         for n in ok:
-            o = offers[n["id"]]
             for dr in self.usable_drivers(d, n):
                 p = self.make_plan(d, n, dr)
                 if p["arrive"] > d["safe_until"] - SAFETY_MARGIN or p["arrive"] > n["open_min"]:
                     late += 1
                     continue
-                bid = network.driver_bid(self, dr, d, n, p)
-                if not bid["willing"]:
-                    refused += 1
-                    bids_by_driver.setdefault(dr["name"], []).append(f"declines {n['name']}: {bid['reason']}")
-                    continue
-                p["servings"] = o["servings"]
-                p["partial"] = o["kind"] == "counter"
-                p["offer"] = o["reason"]
-                bids_by_driver.setdefault(dr["name"], []).append(f"{n['name']}: {bid['reason']}")
-                plans.append(p)
+                trips.append((n, dr, p))
+        # one A2A broadcast over AGNTCY carries every trip the drivers could make; else the mesh; else in-process
+        remote_bids = agntcy_bridge.bids(self, d, [(f"{n['id']}|{dr['id']}", dr, n, p) for n, dr, p in trips]) \
+            if (log and self.live) else None
+        if remote_bids is not None:
+            bids = [remote_bids[f"{n['id']}|{dr['id']}"] for n, dr, p in trips]
+        elif self.mesh:
+            bids = self.mesh.bids(self, d, trips)
+        else:
+            bids = [network.driver_bid(self, dr, d, n, p) for n, dr, p in trips]
+        plans, refused, silent = [], 0, set()
+        bids_by_driver = {}
+        for (n, dr, p), bid in zip(trips, bids):
+            o = offers[n["id"]]
+            if bid is None:
+                silent.add(dr["name"])
+                continue
+            if not bid["willing"]:
+                refused += 1
+                bids_by_driver.setdefault(dr["name"], []).append(f"declines {n['name']}: {bid['reason']}")
+                continue
+            p["servings"] = o["servings"]
+            p["partial"] = o["kind"] == "counter"
+            p["offer"] = o["reason"]
+            bids_by_driver.setdefault(dr["name"], []).append(f"{n['name']}: {bid['reason']}")
+            plans.append(p)
+        if log and silent:
+            self.decide(d, "blocked", f"No answer from the agent of {', '.join(sorted(silent))}")
         if log:
             for name, lines in bids_by_driver.items():
                 more = f" (+{len(lines) - 2} more)" if len(lines) > 2 else ""
@@ -318,6 +349,8 @@ class World:
                 return None
         if not plans:
             d["reconsider"] = False
+            if d["status"] == "en_route":
+                d.pop("locked_driver", None)   # nothing better found: keep the current trip, and don't strand its driver
             if d["status"] == "new":
                 d["status"] = "stuck"
                 if not d.get("flagged_stuck"):
@@ -359,6 +392,9 @@ class World:
         reconsidering = d.get("reconsider") and d["status"] == "en_route"
         d["reconsider"] = False
         self.outcomes[result["outcome"]] = self.outcomes.get(result["outcome"], 0) + 1
+        info = d.pop("new_info", None)
+        if info:
+            self._mark_new_info(d, result, info)
         self.negotiation = dict(result, donation=d["id"], food=", ".join(d["food"]["items"]),
                                 time=hhmm(self.now), seq=next(self._neg_ids))
         self.negotiations.append(self.negotiation)
@@ -395,10 +431,11 @@ class World:
             if not self.live:
                 self.approve(d["id"], d["options"][0]["id"], auto="scripted")
             return
-        label = {"consensus": "Agreed 3 of 3", "majority": "Majority", "urgent": "Time is short, acting on best-supported plan"}[result["outcome"]]
+        label = {"consensus": "Agreed 3 of 3", "majority": "Majority 2 of 3", "urgent": "Time is short, acting on best-supported plan"}[result["outcome"]]
         d["dissent"] = result["dissent"]
         if result["dissent"]:
-            label += " · dissent kept on record: " + ", ".join(x["agent"] for x in result["dissent"])
+            who = " and ".join(x["agent"] for x in result["dissent"])
+            label += f" ({who} {'disagrees' if len(result['dissent']) == 1 else 'disagree'}, kept on record)"
         if reconsidering:
             d.pop("locked_driver", None)
             if plan["np"] == d["plan"]["np"]:
@@ -611,6 +648,9 @@ class World:
             if dr["id"] not in self.drivers:
                 self.drivers[dr["id"]] = dict(dr, status="free", home=pos(dr), pos=pos(dr))
                 self.say("Directory", f"{dr['name']} started a shift ({dr['type']}, {dr['reliability']:.0%} reliable).", "event")
+                if self.mesh and self.mesh.launcher:   # the new driver's own agent starts and joins the directory
+                    self.mesh.launcher.spawn("driver", dr["id"], name=dr["name"], wait=8.0)
+                    self.mesh.agents(fresh=True)
         elif t == "confirm":
             d = next((x for x in self.donations if x["business"] == e["business"] and x["status"] == "awaiting_info"), None)
             if d:
@@ -629,6 +669,31 @@ class World:
                  f"\"Is this free of {gap['allergens']}?\" Will act on what we know by "
                  f"{hhmm(d['answer_by'])} if there's no answer.", "result", d["id"])
 
+    def _mark_new_info(self, d, result, info):
+        """The effect of new information: open the debate with what changed, then each agent says whether
+        it changed its pick (compared with its final pick last time) and why."""
+        result["new_info"] = info
+        prev = next((n for n in reversed(self.negotiations) if n["donation"] == d["id"]), None)
+        if not result.get("rounds"):
+            return
+        lines = [{"agent": "News", "type": "news", "text": f"New information: {info}."}]
+        first = result["rounds"][0]["proposals"]
+        before = prev["rounds"][-1]["proposals"] if prev and prev.get("rounds") else {}
+
+        def name(pid):
+            if not pid:
+                return "nothing"
+            np, dr = (pid.split("|") + [""])[:2]
+            n, x = self.nonprofits.get(np), self.drivers.get(dr)
+            return f"{n['name'] if n else np}" + (f" via {x['name']}" if x else "")
+        for a in agents.AGENTS:
+            was, now = before.get(a), first.get(a)
+            if was and now and was != now:
+                lines.append({"agent": a, "type": "revise", "text": f"That changes my pick: I wanted {name(was)}, now {name(now)}."})
+            elif was and now:
+                lines.append({"agent": a, "type": "revise", "text": f"Still {name(now)}; this doesn't change my pick."})
+        result["rounds"][0]["messages"] = lines + result["rounds"][0]["messages"]
+
     def confirm_allergens(self, did, allergens=None):
         """The business answers. allergens=None means "can't confirm": keep treating them as present."""
         d = self.get(did)
@@ -641,6 +706,7 @@ class World:
             d["food"]["allergens_unverified"] = False
             listed = ", ".join(allergens) or "none of the common ones"
             self.say("World", f"{d['business_name']} confirms the allergens: {listed}. New information; replanning.", "event", did)
+            d["new_info"] = f"{d['business_name']} confirmed the allergens are only: {listed}"
         d["status"] = "new"
         return True
 
@@ -661,9 +727,11 @@ class World:
             d["origin"] = dict(dr["pos"])
             d["locked_driver"] = dr["id"]
             self.say("World", f"{d['id']}: {why}. {dr['name']} already has the food; replanning from here.", "event", d["id"])
+            d["new_info"] = f"{why}, and {dr['name']} already has the food"
         else:
             dr["status"] = "free"
             self.say("World", f"{d['id']}: {why}. Replanning.", "event", d["id"])
+            d["new_info"] = why
         d["status"] = "new"
 
     def cancel_driver(self, driver_id):
@@ -682,6 +750,7 @@ class World:
         self.say("World", f"{dr['name']} cancelled. Reliability {old:.0%} → {dr['reliability']:.0%}; every agent now sees that.", "event")
         for d in self.donations:
             if d["status"] == "awaiting_shelter" and d["ask"]["plan"]["driver"] == driver_id:
+                d["new_info"] = f"{dr['name']} cancelled; reliability dropped from {old:.0%} to {dr['reliability']:.0%}"
                 d.pop("ask")
                 d["status"] = "new"
                 self.say("World", f"{d['id']} needs a new driver.", "event", d["id"])
@@ -692,6 +761,7 @@ class World:
                              f"{agent}'s vote now weighs {self.weights[agent]}.", "adapt", d["id"])
                 d["status"] = "new"
                 d["plan"] = None
+                d["new_info"] = f"{dr['name']} cancelled; reliability dropped from {old:.0%} to {dr['reliability']:.0%}"
                 self.say("World", f"{d['id']} needs a new driver.", "event", d["id"])
 
     def add_pantry(self):
@@ -699,12 +769,18 @@ class World:
         if n["id"] in self.nonprofits:
             return
         self._register(n)
+        if self.mesh and self.mesh.launcher:   # the new pantry's own agent starts and joins the directory
+            if self.mesh.launcher.spawn("shelter", n["id"], wait=8.0):
+                self.say("Directory", f"{n['name']}'s agent registered in the agent directory.", "event")
+            self.mesh.agents(fresh=True)   # discover it now, not on the next cache refresh
         for d in self.donations:
             if d["status"] in ("stuck", "awaiting_human"):
                 d["status"] = "new"
                 d["skip"] = []
+                d["new_info"] = f"{n['name']} just joined the network"
             elif d["status"] == "en_route" and self.now < d["t_pick"] and self.policy == "agents":
                 d["reconsider"] = True
+                d["new_info"] = f"{n['name']} just joined the network"
 
     # ---------------- clock ----------------
     def tick(self, minutes=1, plan_inline=True):
@@ -773,7 +849,8 @@ class World:
             self.say("World", f"{d['id']} arrived at {n['name']} but it's {why}. Turned away.", "event", d["id"])
             return
         if not any(x is not d and x["status"] == "en_route" and x["plan"]["driver"] == dr["id"] for x in self.donations) \
-                and not any(x.get("locked_driver") == dr["id"] for x in self.donations):
+                and not any(x is not d and x.get("locked_driver") == dr["id"]
+                            and x["status"] not in ("delivered", "spoiled", "expired") for x in self.donations):
             dr["status"] = "free"
         if d["plan"]["cost"]:
             self.impact["cost"] += d["plan"]["cost"]
@@ -797,7 +874,7 @@ class World:
             self.impact["spare"] = self.impact.get("spare", 0) + (d["safe_until"] - self.now)
             self.impact["perishable"] = self.impact.get("perishable", 0) + 1
         self.records.append({
-            "donation": d["id"], "date": "2026-10-10", "donor": d["business_name"], "recipient": n["name"],
+            "donation": d["id"], "date": datetime.date.today().isoformat(), "donor": d["business_name"], "recipient": n["name"],
             "items": ", ".join(f["items"]), "category": f["category"], "servings": f["servings"],
             "weight_lbs": f"{f['weight_lbs'][0]:g}–{f['weight_lbs'][1]:g}", "picked_up": hhmm(d["t_pick"]),
             "delivered": hhmm(self.now), "transport": d["plan"]["driver_type"],
@@ -806,7 +883,7 @@ class World:
 
     def expire(self, d):
         if d.get("locked_driver"):
-            self.drivers[d["locked_driver"]]["status"] = "free"
+            self.drivers[d.pop("locked_driver")]["status"] = "free"
         d["status"] = "expired"
         self.impact["spoiled"] += d["food"]["servings"]
         self.say("World", f"{d['id']} passed its safe time before delivery. {d['food']['servings']} servings lost.", "event", d["id"])
@@ -842,7 +919,7 @@ class World:
                 x["decide_by"] = hhmm(self.last_call(d))   # after this the fallback rule acts
             dons.append(x)
         return {
-            "now": hhmm(self.now), "scenario": self.scenario_name, "busy": self.busy,
+            "now": hhmm(self.now), "scenario": self.scenario_name, "busy": self.busy, "world_id": self.world_id,
             "nonprofits": [{k: n[k] for k in ("id", "name", "lat", "lng", "accepts", "has_fridge", "open_until",
                                               "capacity_servings", "received", "full", "last_donation_days")}
                            for n in self.nonprofits.values()],
@@ -850,6 +927,8 @@ class World:
             "drivers": drivers, "donations": dons,
             "feed": self.feed[-120:], "decisions": self.decisions[-60:], "records": self.records,
             "negotiation": self.negotiation, "negotiations": self.negotiations, "weights": self.weights,
+            "deliberating": None if self.live_rounds is None else {
+                "donation": self.live_donation, "rounds": [dict(r, messages=list(r["messages"])) for r in list(self.live_rounds)]},
             "outcomes": self.outcomes,
             "network": self.network[-200:],
             "agents_online": {"businesses": len(self.businesses), "shelters": len(self.nonprofits),

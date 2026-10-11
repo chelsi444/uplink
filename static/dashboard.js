@@ -794,7 +794,9 @@ function callScript(n){
   const items = (d.food.items || []).join(" and ").toLowerCase();
   const take = reply && (reply.text.match(/take (\d+)/) || [])[1];
   const biz = d.business_name || "a business nearby", when = ampm(n.plan.arrive_hhmm);
-  const ask = `Hi, is this ${shortNp(np)}? … Hey! It's the Uplink dispatcher. So, ${biz} just closed up with ${d.food.servings} servings of ${items}${d.food.needs_cold ? ", and they REALLY need to stay cold" : ""}. ${drv} can have it to you by ${when}. [curious] Any chance you can take it?`;
+  const hello = `Hi, is this ${shortNp(np)}?`;
+  const hi = `Yes, it is! How can I help?`;
+  const ask = `Hey! It's the Uplink dispatcher. So, ${biz} just closed up with ${d.food.servings} servings of ${items}${d.food.needs_cold ? ", and they REALLY need to stay cold" : ""}. ${drv} can have it to you by ${when}. [curious] Any chance you can take it?`;
   const ans = !reply || reply.kind === "accept" ? `[excited] Oh, that's PERFECT timing! Yeah, we can take all ${d.food.servings}. Send it over!`
     : reply.kind === "counter" ? `[sighs] Hmm… we're pretty tight on space tonight. We could take ${take || "some"} of them, though?`
     : `[sighs] Ah, I'm so sorry… we're actually full right now.`;
@@ -802,7 +804,7 @@ function callScript(n){
     : reply.kind === "counter" ? `No problem at all. We'll send you ${take || "what you can take"}, and find a home for the rest. Thanks!`
     : `Totally get it. We'll try somewhere else… thanks anyway!`;
   const ln = (who, side, name, say) => ({who, side, name, say, text: say.replace(/\[[^\]]*\]\s*/g, "")});
-  return {np, lines:[ln("Dispatch", "a", "Uplink dispatcher", ask), ln("Shelter", "b", np, ans), ln("Dispatch", "a", "Uplink dispatcher", close)]};
+  return {np, lines:[ln("Dispatch", "a", "Uplink dispatcher", hello), ln("Shelter", "b", np, hi), ln("Dispatch", "a", "Uplink dispatcher", ask), ln("Shelter", "b", np, ans), ln("Dispatch", "a", "Uplink dispatcher", close)]};
 }
 // generate the call's audio while the debate replays, so the call starts without a pause
 function prefetchCall(n){ if(voiceOn && n && n.plan && S.mode && S.mode.voice === "elevenlabs") try{ callScript(n).lines.forEach(l => audioFor(l.who, l.say)); }catch(e){} }

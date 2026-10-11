@@ -779,7 +779,10 @@ function callSay(who, say){
     if(!voiceOn || !audioOK){ clearTimeout(t); setTimeout(resolve, Math.max(1600, text.length * 45)); return; }
     const silent = () => { clearTimeout(t); setTimeout(resolve, Math.max(1600, text.length * 45)); };
     if(!(S && S.mode && S.mode.voice === "elevenlabs")) return silent();
-    const a = audioFor(who, say); a.currentTime = 0; a.onended = done; a.onerror = silent;
+    const url = `/api/tts?who=${encodeURIComponent(who)}&text=${encodeURIComponent(say)}`;
+    let a = audioFor(who, say);
+    if(a.error){ delete audioCache[url]; a = audioFor(who, say); }   // an earlier fetch failed (e.g. the voice service was busy): try again
+    a.currentTime = 0; a.onended = done; a.onerror = silent;
     a.play().catch(silent);
   });
 }

@@ -275,9 +275,9 @@ function drawNegotiation(){
     ${banner}
     <div class="agents">${cards}</div>`);
 
-  if(!playing && n.plan && callFor === n.seq && !pinned){ callFor = null; startCall(n); }
+  if(!playing && n.plan && callFor === n.seq && !pinned){ callFor = null; queueCall(n); }
   // nothing left to play for this decision (no plan, or no call coming): let the driver go now
-  if(S.holding && !playing && callFor === null && !(call && call.phase !== "ended")) releaseHold(null);
+  if(S.holding && !playing && callFor === null && !onCall() && !callQueue.length) releaseHold(null);
 
   // ---- detail (inside "See the debate"): only built when opened ----
   if(!$("debate-more").open) return;
@@ -537,7 +537,7 @@ async function refresh(){
 }
 let fastTimer = null;
 
-function resetLocal(){ lastNegKey=null; pinned=null; play={seq:0,shown:0,total:0}; lastSeq=0; call=null; callFor=null; endSpeak(); drawCall(); }
+function resetLocal(){ lastNegKey=null; pinned=null; play={seq:0,shown:0,total:0}; lastSeq=0; stopCallAudio(); callQueue=[]; call=null; callFor=null; endSpeak(); drawCall(); }
 $("start").onclick = async()=>{ closeMenus(); await post("/api/reset",{scenario:$("scenario").value}); resetLocal(); if(location.hash!=="#/live") location.hash = "#/live"; refresh(); };
 $("blank").onclick = async()=>{ closeMenus(); await post("/api/reset",{}); resetLocal(); refresh(); };
 $("speed").onchange = e=>post("/api/control",{speed:+e.target.value});
@@ -806,7 +806,17 @@ function callScript(n){
 }
 // generate the call's audio while the debate replays, so the call starts without a pause
 function prefetchCall(n){ if(voiceOn && n && n.plan && S.mode && S.mode.voice === "elevenlabs") try{ callScript(n).lines.forEach(l => audioFor(l.who, l.say)); }catch(e){} }
+// One call at a time: a decision that arrives while a call is on the line (say, a re-plan to another shelter)
+// waits its turn instead of talking over it.
+let callQueue = [];
+const onCall = () => !!(call && call.phase !== "ended");
+function stopCallAudio(){ Object.values(audioCache).forEach(a => { try{ a.pause(); a.currentTime = 0; }catch(e){} }); }
+function queueCall(n){
+  if(!onCall()) return startCall(n);
+  callQueue = callQueue.filter(q => q.donation !== n.donation).concat([n]);   // newest decision per donation wins
+}
 async function startCall(n){
+  if(onCall()) stopCallAudio();   // replacing a call (replay): silence the old one first
   const sc = callScript(n);
   const me = call = {seq:n.seq, donation:n.donation, np:sc.np, phase:"ringing", said:[], talking:null, t0:Date.now(), voiced:[]};
   drawCall();
@@ -822,6 +832,8 @@ async function startCall(n){
   }
   me.phase = "ended"; me.secs = Math.round((Date.now() - me.t0) / 1000); drawCall();
   releaseHold(me.seq);
+  const next = callQueue.shift();
+  if(next){ await wait(1200); if(call === me) startCall(next); }
 }
 // the server holds the clock after a decision until the call has played; then the driver sets off on the map
 let lastRelease = 0;

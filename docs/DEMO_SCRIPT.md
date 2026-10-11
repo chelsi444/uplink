@@ -1,6 +1,6 @@
 # Uplink: demo script for three speakers
 
-About **4 minutes**, plus optional extensions if you have time and a 2-minute cut if you don't.
+About **4 minutes 15**, plus optional extensions if you have time and a 2-minute cut if you don't.
 
 | Speaker | Owns | Drives the laptop during |
 | --- | --- | --- |
@@ -139,39 +139,49 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 `[PAUSE: let the whole call play, about 15 seconds. Don't talk over it.]`
 
+*(While the call plays, the driver quietly opens Demo controls and presses **Driver cancels**. A small note says the courier will cancel when the call ends. Don't mention it yet.)*
+
 > Two agents, two **ElevenLabs** voices. / And the shelter's answer is its agent's **real** reply. / Shelter staff can also answer by **voice** from their phone.
 >
 > *Only* after the call does the driver set off.
 
-*(The driver scrolls down to the map.)*
+*(The driver scrolls down to the map. Hand to Sara.)*
 
-**On screen:** the map: the courier's dot leaves the restaurant toward Walnut Avenue; the message log on the left.
+---
 
-> *(Point at the map.)* There it goes.
+### 3:15 · Sara · New information: the courier cancels
+
+> But plans break. / The courier just **cancelled**.
+
+**On screen:** a red dashed line and ✕ where the courier was; the map line says "Rapid Courier A cancelled… Walnut Avenue still expects it". The agents deliberate again: "New information… only the transport is open."
+
+> That's **new information**, / and every agent re-argues with it. / Walnut Avenue already said **yes**, so nobody calls them again: / the agents only decide how to get the food **there**. / *(Point at the result.)* A new driver, / the same shelter, / decided by the same three agents. *(In our test runs they picked the free volunteer, all three agreeing; say what's on screen.)*
+
+**On screen:** the Phone line says **"No new call"**; Sam's route appears on the map.
 
 *(Hand to Haatim.)*
 
 ---
 
-### 3:25 · Haatim · Evidence
+### 3:35 · Haatim · Evidence
 
 *(Optional extension A goes here if you have time: see below.)*
 
 *(The driver clicks the **Evidence** tab.)*
 
-**On screen:** Evidence: "82% less food lost", "49% less than the best single agent", "95 of 100".
+**On screen:** Evidence: "93% less food lost", "67% less than the best single agent", "99 of 100".
 
 > Does arguing actually **help**? / We tested it on **100** random scenarios the system had **never seen**: driver no-shows, full shelters, new pantries.
 >
-> Compared to the simple approach, nearest shelter and nearest driver, / the team lost **82% less** food.
+> Compared to the simple approach, nearest shelter and nearest driver, / the team lost **93% less** food.
 >
-> And here's the part we're proudest of: / compared to **any one agent deciding alone**, / the team lost **49% less**. / Speed alone overspends. / Cost alone trusts volunteers who don't show. / Need alone takes risky trips.
+> And here's the part we're proudest of: / compared to **any one agent deciding alone**, / the team lost **67% less**. / Speed alone overspends. / Cost alone trusts volunteers who don't show. / Need alone takes risky trips.
 >
 > **Together, they veto each other's blind spots.**
 
 ---
 
-### 3:50 · Sara · Close
+### 4:00 · Sara · Close
 
 **On screen:** go back to the Live tab, showing the result and the agent cards.
 
@@ -212,7 +222,7 @@ When "Asking a coordinator" appears, click **Decisions**:
 | 0:50 | Sara | `/ops` → Majority with dissent | Name the three goals and red lines; narrate the objections; "Majority 2 of 3, dissent **on record**." |
 | 1:25 | Haatim | Agent network graph | "Sixteen agents, each its own process, on **AGNTCY** A2A over NATS. Safety is never negotiated." |
 | 1:40 | Chelsi | Phone line | Let 5 seconds of the call play: "the dispatcher **calls** the shelter." |
-| 1:50 | Haatim | Evidence | "**82%** less food lost than the simple approach; **49%** less than any one agent alone." |
+| 1:50 | Haatim | Evidence | "**93%** less food lost than the simple approach; **67%** less than any one agent alone." |
 | 2:00 | Sara | Live | The closing line. |
 
 ---

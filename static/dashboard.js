@@ -159,9 +159,13 @@ function drawMap(){
   active.forEach(d=>{
     const dr = S.drivers.find(x=>x.id===d.plan.driver); if(!dr) return;
     const to = [d.dest.lat,d.dest.lng], me = [dr.lat,dr.lng], from = [d.origin.lat,d.origin.lng];
-    const pts = d.picked ? [me,to] : [me,from,to];
-    L.polyline(pts,{color:"#2563eb",weight:5,opacity:.85,lineCap:"round",lineJoin:"round"}).addTo(layers.route);
-    arrow(pts[pts.length-2], to);
+    // two legs: lighter on the way to the pickup, solid from the pickup to the shelter, each with its own arrow
+    if(!d.picked){
+      L.polyline([me,from],{color:"#93c5fd",weight:4,opacity:.9,lineCap:"round"}).addTo(layers.route);
+      arrow(me, from, "to-pick");
+    }
+    L.polyline([d.picked ? me : from, to],{color:"#2563eb",weight:5,opacity:.9,lineCap:"round"}).addTo(layers.route);
+    arrow(d.picked ? me : from, to);
     focus.push(me, from, to);
   });
   S.donations.filter(d=>!DONE_ST.includes(d.status)).forEach(d=>{
@@ -608,7 +612,7 @@ $("closing").onclick = async()=>{
   if(!Object.keys(S.cameras||{}).length){ toast("No camera connected. Start camera.py first.", "warn"); return; }
   await post("/api/closing", {}); toast("Closing time: cameras are reporting leftover food", "info");
 };
-document.querySelectorAll("[data-ev]").forEach(b=>b.onclick=async()=>{ closeMenus(); await post("/api/event/"+b.dataset.ev); refresh(); });
+document.querySelectorAll("[data-ev]").forEach(b=>b.onclick=async()=>{ closeMenus(); const j = await post("/api/event/"+b.dataset.ev); if(j && j.note) toast(j.note); refresh(); });
 $("feed-filter").onchange = ()=>{ if(S) drawFeed(); };
 $("log-filter").onchange = ()=>{ if(S) drawLog(); };
 $("debate-more").addEventListener("toggle", ()=>{ if(S && view==="live") drawNegotiation(); });

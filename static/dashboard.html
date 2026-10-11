@@ -138,7 +138,7 @@
     <div class="row r2">
       <div class="callp open" aria-labelledby="call-h">
         <div class="panel-head"><h2 id="call-h"><span class="stepno">3</span>Phone line <span class="sub-h">the dispatcher agent calls the chosen shelter</span></h2></div>
-        <div class="call-badges"><span class="pill outline">Voices: ElevenLabs Flash v2.5</span><span class="pill outline">Speech to text: ElevenLabs Scribe</span></div>
+        <div class="call-badges"><span class="pill outline">Voices: ElevenLabs v3</span><span class="pill outline">Speech to text: ElevenLabs Scribe</span></div>
         <div class="call-body">
           <div class="call-card" id="call-card"><p class="call-idle">No call yet. When the agents choose a shelter, the dispatcher agent calls it here.</p></div>
           <ol class="call-tx" id="call-tx" aria-live="polite" aria-label="Call transcript"></ol>
@@ -272,7 +272,7 @@
   <h2 class="sec-h">Built with</h2>
   <ul class="built">
     <li><b>Claude API (Anthropic)</b><span>Reads the food in each photo, matched against the restaurant's menu, and, when AI reasoning is on, writes each agent's proposals, objections and votes. Safety rules and vote counting stay in plain code.</span></li>
-    <li><b>ElevenLabs</b><span>Flash v2.5 gives Speed, Cost, Need, the dispatcher and the shelter their own voices. Scribe turns a shelter's spoken answer into text the agents act on.</span></li>
+    <li><b>ElevenLabs</b><span>Eleven v3 voices the dispatcher agent's phone call to the shelter agent, with natural pauses and emotion. Scribe turns a business's spoken leftovers and a shelter's spoken answer into text the agents act on.</span></li>
     <li><b>Cisco Outshift challenge</b><span>Built for "When AI Agents Disagree", Level 3: agents with competing goals, no central decision-maker, and clear rules for when to stop, keep disagreeing, or ask a person.</span></li>
     <li><b>AGNTCY (Cisco Outshift)</b><span>With AGNTCY on, every shelter and driver agent is its own A2A agent on NATS, built with the AGNTCY app-sdk. A donation is announced with one A2A broadcast to the shelter agents, and trips go out in one broadcast to the driver agents. Every agent also has an A2A card and an OASF record (Open menu, Agent records).</span></li>
     <li><b>NVIDIA Brev (optional)</b><span>The photo reader can also run on an open vision model (Qwen2.5-VL) on a Brev GPU instead of Claude. See docs/BREV_SETUP.md.</span></li>

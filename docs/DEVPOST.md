@@ -15,7 +15,7 @@ AI agents with competing goals argue over where tonight's leftover food should g
 
 ## Thumbnail / gallery suggestions
 
-1. `/ops` mid-debate: the Negotiation panel with the three agents' cards beside the Agent network graph lighting up
+1. `/ops` mid-debate: the Agent network graph lighting up beside the Negotiation panel and the three agents' cards
 2. The Phone line: the dispatcher agent on a call with the shelter agent (ElevenLabs voices)
 3. Customer site: the **Say it** tab ("we've got two trays of pasta and a dozen bagels") turned into a menu order
 4. A "Majority 2 of 3 (Cost disagrees, kept on record)" result
@@ -70,10 +70,9 @@ They propose, vote with a reason, object or veto, and revise, over up to three r
 
 **Safety is never negotiated.** Code removes every plan that breaks a food-safety rule (fridge, allergens, capacity, hours, time to spoil) before any agent sees it.
 
-### 3. You can hear them: ElevenLabs
+### 3. Then the agents pick up the phone: ElevenLabs
 
-- **The debate, out loud.** Speed, Cost and Need each speak their lines in their own ElevenLabs voice (Flash v2.5) as the debate plays.
-- **The phone call.** Once they agree, a **dispatcher agent calls the shelter agent**. Two voices, ringing, a live transcript: "Hi Walnut Avenue Family & Women's Center, this is the Uplink dispatcher. Jack O'Neill Restaurant has 25 servings of pasta trays… can you take it?" The shelter's answer is its agent's real reply. The driver sets off on the map only after the call ends.
+- **The phone call.** Once they agree, a **dispatcher agent calls the shelter agent** in natural, expressive voices (ElevenLabs v3): ringing, a live transcript, real pauses and emotion. "Hi, is this Walnut Avenue Family & Women's Center? … It's the Uplink dispatcher. Jack O'Neill Restaurant just closed up with 25 servings of pasta trays… any chance you can take it?" The shelter's answer is its agent's **real reply**: an excited yes, a sigh and "we could take some of them", or "we're actually full right now." The driver sets off on the map only after the call ends.
 - **Voice in, too.** Businesses donate by voice, and shelter staff can answer a request by speaking on the shelter's phone page; ElevenLabs Scribe turns both into text.
 
 ### 4. It adapts when the world changes
@@ -87,7 +86,7 @@ A shelter says it's full, a driver cancels, a new pantry joins mid-run: the agen
 - **Every agent is its own service, on AGNTCY.** 16 agents (7 shelters, 6 drivers, 3 negotiators), each in its own process, each an **A2A agent over NATS** using Cisco Outshift's AGNTCY app-sdk. Each step of a donation is one A2A broadcast, to every shelter, every driver or the three negotiators. An agent directory with heartbeats lets agents find each other; a stopped agent drops out and the rest carry on. Every agent publishes an A2A AgentCard and an **OASF record** (served at `/agntcy/records`).
 - **The negotiation table only relays.** It passes messages and counts votes; it never picks a plan.
 - **Claude (Anthropic API)** does four jobs: speaks for each negotiator (each sees *only* the facts its goal cares about, and votes against a numeric bar), reads photos and videos of food, turns a spoken sentence into a menu order, and falls back to deterministic rules if a call fails or times out, so the demo never stalls.
-- **ElevenLabs:** Flash v2.5 text-to-speech with a distinct voice per agent, plus Scribe speech-to-text for voice donations and spoken shelter answers.
+- **ElevenLabs:** Eleven v3 text-to-speech for the dispatcher-to-shelter call (the script is written to be spoken, with v3 cues like `[excited]` and `[sighs]`), plus Scribe speech-to-text for voice donations and spoken shelter answers.
 - **Live by design.** The dashboard streams each proposal and objection the moment an agent says it, with who's still thinking. The simulated clock pauses while agents deliberate, so no food-safety time is lost to model latency.
 - **Stack:** Python, Flask, AGNTCY app-sdk + A2A + NATS, Claude, ElevenLabs, Leaflet, YOLO-World for an optional counter camera, Qwen2.5-VL on an NVIDIA Brev GPU as a backup vision model, vanilla HTML/CSS/JS. 56 automated tests.
 

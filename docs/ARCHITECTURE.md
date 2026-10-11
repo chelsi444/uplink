@@ -56,7 +56,7 @@ flowchart LR
 | Negotiators | `agents.py` | Speed, Cost and Need each evaluate every plan, propose, vote, and hold one red line. Each step is a separate function (`agent_evaluate`, `agent_propose`, `agent_vote`) so it can run in its own process. Rules by default; `LLM_AGENTS=1` lets Claude reason. |
 | Agent processes | `mesh/` | Directory, one process per agent (A2A over NATS with the AGNTCY app-sdk, HTTP fallback), the client that broadcasts and traces every message, the launcher (also starts `nats-server`). See "Distributed runtime" below. |
 | In-app AGNTCY bridge | `agntcy_bridge.py` | Used only when the separate processes are off (`MESH=0 AGNTCY=1`): serves shelter and driver agents over AGNTCY inside the app, and publishes OASF records at `/agntcy/records`. |
-| Voices | `voice.py` | ElevenLabs: agents speak the debate; the Phone line; shelters hear requests and answer by voice (Scribe). |
+| Voices | `voice.py` | ElevenLabs: the dispatcher-to-shelter phone call (Eleven v3); voice donations and spoken shelter answers (Scribe). |
 | Server | `app.py` | Flask. A clock thread and a planner thread; negotiations run outside the lock so a slow agent never freezes the dashboard. |
 | Scenarios and evidence | `scenarios.py` | 9 scripted scenarios and a seeded random generator, run against 5 policies. See [RESULTS.md](RESULTS.md). |
 

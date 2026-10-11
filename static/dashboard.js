@@ -33,7 +33,7 @@ function audioFor(who, text){
   return audioCache[url];
 }
 function endSpeak(){ speaking = false; clearTimeout(speakTimer); }
-function replay(){ const n = pinned ? (S.negotiations||[]).find(h=>h.seq===pinned) : S.negotiation; if(!n) return; callFor = n.seq;
+function replay(){ const n = pinned ? (S.negotiations||[]).find(h=>h.seq===pinned) : S.negotiation; if(!n) return; callFor = callNeeded(n) ? n.seq : null;
   play = {key: play.key, seq: n.seq, shown: 0, total: n.rounds.reduce((k,r)=>k+r.messages.length,0)}; drawNegotiation(); }
 const $ = id => document.getElementById(id);
 // Write HTML only when it changed: no flicker, hover and scroll survive the 1-second refresh.
@@ -78,6 +78,9 @@ function ensureMap(){
     map = L.map("map",{zoomControl:true}).setView([36.978,-122.03],13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap contributors"}).addTo(map);
     layers = {route:L.layerGroup().addTo(map), np:L.layerGroup().addTo(map), biz:L.layerGroup().addTo(map), drv:L.layerGroup().addTo(map)};
+    // drivers glide between 1-second updates, but not while zooming (they'd slide across the screen)
+    let still; map.on("zoomstart", ()=>{ clearTimeout(still); $("map").classList.add("no-glide"); });
+    map.on("zoomend", ()=>{ still = setTimeout(()=>$("map").classList.remove("no-glide"), 1200); });
   }catch(e){ map = null; $("map").innerHTML = "<p class='empty' style='padding:12px'>The map needs internet for its tiles. Everything else still works.</p>"; }
 }
 
@@ -99,8 +102,8 @@ function npIcon(n, inv){
 }
 function bizIcon(b, inv){ return L.divIcon({className:"", iconSize:[12,12], iconAnchor:[6,6], html:`<div class="mb ${inv?"inv":""}"><i></i><span>${esc(b.name)}</span></div>`}); }
 function driverIcon(dr, active){
-  if(active) return L.divIcon({className:"", iconSize:[28,28], iconAnchor:[14,14], html:`<div class="drv on">${esc(dr.name[0])}</div>`});
-  return L.divIcon({className:"", iconSize:[12,12], iconAnchor:[6,6], html:`<div class="drv ${dr.status==="off"?"off":"idle"}"></div>`});
+  if(active) return L.divIcon({className:"drv-mk", iconSize:[28,28], iconAnchor:[14,14], html:`<div class="drv on">${esc(dr.name[0])}</div>`});
+  return L.divIcon({className:"drv-mk", iconSize:[12,12], iconAnchor:[6,6], html:`<div class="drv ${dr.status==="off"?"off":"idle"}"></div>`});
 }
 function bearing(a, b){ const dx = (b[1]-a[1]) * Math.cos(a[0]*Math.PI/180), dy = b[0]-a[0]; return Math.atan2(dx, dy) * 180 / Math.PI; }
 function median(a){ const s = a.slice().sort((x,y)=>x-y); return s.length ? s[Math.floor(s.length/2)] : 0; }
@@ -114,7 +117,7 @@ function callPending(){
   const n = S.negotiation; if(!n || !n.plan || pinned) return null;
   const lines = n.rounds.reduce((t, r) => t + r.messages.length, 0);
   const playing = play.seq === n.seq && play.shown < lines;
-  const calling = callFor === n.seq || (call && call.seq === n.seq && call.phase !== "ended");
+  const calling = (callFor === n.seq && callNeeded(n)) || (call && call.seq === n.seq && call.phase !== "ended");
   return playing || calling ? n.donation : null;
 }
 function drawMap(){
@@ -143,21 +146,49 @@ function drawMap(){
   });
   for(const id in markers){ if(!live.has(id)){ markers[id].remove(); delete markers[id]; } }   // e.g. after a reset
 
-  // routes: bold solid lines with an arrow near the destination
+  // routes, by stage: deciding (pulse at the pickup), waiting on the call (dashed plan), driving (solid),
+  // driver cancelled (struck-out red line until the agents find another way)
   layers.route.clearLayers();
-  // in order: a decision's route appears only once its debate replay and the dispatcher's call are over
   const pend = callPending();
   const active = S.donations.filter(d=>d.status==="en_route" && d.plan && d.id !== pend);
   const focus = [];
+  const arrow = (a, to, cls) => {
+    const t = 0.82, at = [a[0]+(to[0]-a[0])*t, a[1]+(to[1]-a[1])*t];
+    L.marker(at,{interactive:false,icon:L.divIcon({className:"",iconSize:[16,16],iconAnchor:[8,8],html:`<div class="arrow ${cls||""}" style="transform:rotate(${bearing(a,to).toFixed(0)}deg)"></div>`})}).addTo(layers.route);
+  };
   active.forEach(d=>{
     const dr = S.drivers.find(x=>x.id===d.plan.driver); if(!dr) return;
     const to = [d.dest.lat,d.dest.lng], me = [dr.lat,dr.lng], from = [d.origin.lat,d.origin.lng];
-    const pts = d.picked ? [me,to] : [me,from,to];
-    L.polyline(pts,{color:"#2563eb",weight:5,opacity:.85,lineCap:"round"}).addTo(layers.route);
-    const a = pts[pts.length-2], t = 0.82, at = [a[0]+(to[0]-a[0])*t, a[1]+(to[1]-a[1])*t];
-    L.marker(at,{interactive:false,icon:L.divIcon({className:"",iconSize:[16,16],iconAnchor:[8,8],html:`<div class="arrow" style="transform:rotate(${bearing(a,to).toFixed(0)}deg)"></div>`})}).addTo(layers.route);
+    // two legs: lighter on the way to the pickup, solid from the pickup to the shelter, each with its own arrow
+    if(!d.picked){
+      L.polyline([me,from],{color:"#93c5fd",weight:4,opacity:.9,lineCap:"round"}).addTo(layers.route);
+      arrow(me, from, "to-pick");
+    }
+    L.polyline([d.picked ? me : from, to],{color:"#2563eb",weight:5,opacity:.9,lineCap:"round"}).addTo(layers.route);
+    arrow(d.picked ? me : from, to);
     focus.push(me, from, to);
   });
+  S.donations.filter(d=>!DONE_ST.includes(d.status)).forEach(d=>{
+    const from = d.origin && [d.origin.lat,d.origin.lng];
+    if(d.id === pend && d.plan && d.dest){   // the dispatcher is calling the shelter: the plan, not yet a trip
+      const dr = S.drivers.find(x=>x.id===d.plan.driver), to = [d.dest.lat,d.dest.lng];
+      const pts = dr && !d.picked ? [[dr.lat,dr.lng], from, to] : [from, to];
+      L.polyline(pts,{color:"#2563eb",weight:4,opacity:.6,dashArray:"2 9",lineCap:"round"}).addTo(layers.route);
+      arrow(pts[pts.length-2], to, "plan");
+      focus.push(...pts);
+      return;
+    }
+    if(d.status === "en_route") return;
+    if(d.cancelled){   // the driver who cancelled, and the trip that won't happen
+      const np = S.nonprofits.find(n=>n.id===d.keep_np);
+      const c = [d.cancelled.lat,d.cancelled.lng], pts = np ? [c, from, [np.lat,np.lng]] : [c, from];
+      L.polyline(pts,{color:"#dc2626",weight:3,opacity:.7,dashArray:"6 8",lineCap:"round"}).addTo(layers.route);
+      L.marker(c,{interactive:false,icon:L.divIcon({className:"",iconSize:[20,20],iconAnchor:[10,10],html:`<div class="x-mk" title="${esc(d.cancelled.name)} cancelled">✕</div>`})}).addTo(layers.route);
+      focus.push(...pts);
+    }
+    if(from) L.marker(from,{interactive:false,icon:L.divIcon({className:"",iconSize:[34,34],iconAnchor:[17,17],html:`<div class="pick-pulse ${d.status}"></div>`})}).addTo(layers.route);
+  });
+  drawMapStatus(pend);
   // fit to the active routes, else to the shelters, whenever that focus changes
   let pts = focus, mode = "routes";
   if(!pts.length){
@@ -172,6 +203,40 @@ function drawMap(){
     const c = core(pts);
     map.fitBounds(L.latLngBounds(c), {padding:[50,50], maxZoom:15});
   }
+}
+
+// One line per donation in progress, saying where it is in the dispatch.
+function drawMapStatus(pend){
+  const np = id => (S.nonprofits.find(n=>n.id===id) || {}).name || "the shelter";
+  const deciding = S.deliberating && S.deliberating.donation;
+  const lines = S.donations.filter(d=>!DONE_ST.includes(d.status)).map(d=>{
+    const p = d.plan;
+    if(d.id === deciding) return ["think", d.keep_np ? `Agents deciding how to get ${d.id} to ${np(d.keep_np)}` : `Agents deciding where ${d.id} goes`];
+    if(d.cancelled && d.status !== "en_route") return ["bad", `${d.cancelled.name} cancelled ${d.id}. ${np(d.keep_np)} still expects it; the agents are finding another way there`];
+    if(d.id === pend && p){
+      const n = S.negotiation, replaying = play.seq === n.seq && play.shown < play.total;
+      if(replaying) return ["think", n.transport_only ? `${n.cancelled || "The driver"} cancelled. Agents choosing another way to get ${d.id} to ${p.np_name}`
+                                                       : `Agents deciding where ${d.id} goes`];
+      return ["call", `Dispatcher calling ${p.np_name} about ${d.id} · ${p.driver_name} waits`];
+    }
+    if(d.status === "en_route" && p) return d.picked
+      ? ["go", `${p.driver_name} carrying ${d.id} to ${p.np_name} · arrives ${p.arrive_hhmm}`]
+      : ["go", `${p.driver_name} heading to ${d.business_name} to pick up ${d.id} · then ${p.np_name}, arrives ${p.arrive_hhmm}`];
+    if(d.status === "awaiting_human") return ["wait", `${d.id} is waiting for a coordinator's decision`];
+    if(d.status === "awaiting_info") return ["wait", `Asking ${d.business_name} about ${d.id}'s allergens`];
+    if(d.status === "awaiting_shelter" && p) return ["call", `Waiting for ${p.np_name} to answer about ${d.id}`];
+    if(d.status === "stuck") return ["bad", `${d.id}: no safe plan yet; the agents keep retrying`];
+    return ["think", `${d.id} is next for the agents`];
+  });
+  setHTML("map-status", lines.length ? lines.slice(0, 3).map(([k, t]) => `<li class="${k}"><i></i>${esc(t)}</li>`).join("")
+    + (lines.length > 3 ? `<li class="more">+${lines.length - 3} more</li>` : "") : idleStatus());
+}
+function idleStatus(){
+  const last = S.donations.slice().reverse().find(d => DONE_ST.includes(d.status));
+  if(!last) return `<li class="idle"><i></i>No delivery in progress</li>`;
+  return last.status === "delivered" && last.plan
+    ? `<li class="done"><i></i>${esc(last.id)} delivered to ${esc(last.plan.np_name)} by ${esc(last.plan.driver_name)}</li>`
+    : `<li class="bad"><i></i>${esc(last.id)} ${last.status === "spoiled" ? "spoiled" : "expired"} before it could be delivered</li>`;
 }
 
 // ---------- negotiation ----------
@@ -243,8 +308,12 @@ function drawNegotiation(){
     play.key = nkey;
     // already watched live as the agents spoke: no replay, straight to the result
     const watched = liveSeen.donation === n.donation && liveSeen.count > 0;
-    play = {key: nkey, seq: n.seq, shown: watched ? msgs.length : 0, total: msgs.length}; callFor = n.seq; liveSeen = {donation: null, count: 0};
-    prefetchCall(n);
+    play = {key: nkey, seq: n.seq, shown: watched ? msgs.length : 0, total: msgs.length}; callFor = callNeeded(n) ? n.seq : null; liveSeen = {donation: null, count: 0};
+    if(n.transport_only){   // nobody calls the shelter again; don't cut off a call that's still on the line
+      callQueue = callQueue.filter(q => q.donation !== n.donation);
+      if(!onCall()) call = null;
+      noCall = n; drawCall();
+    } else { noCall = null; prefetchCall(n); }
   }
   if(play.seq === null || play.seq === undefined){ play = {key: nkey, seq: n.seq, shown: msgs.length, total: msgs.length}; }   // old news
   wire();   // after the playback is set up for a new decision, so the diagram never flashes the final result first
@@ -537,7 +606,7 @@ async function refresh(){
 }
 let fastTimer = null;
 
-function resetLocal(){ lastNegKey=null; pinned=null; play={seq:0,shown:0,total:0}; lastSeq=0; stopCallAudio(); callQueue=[]; call=null; callFor=null; endSpeak(); drawCall(); }
+function resetLocal(){ lastNegKey=null; pinned=null; play={seq:0,shown:0,total:0}; lastSeq=0; stopCallAudio(); callQueue=[]; call=null; callFor=null; noCall=null; endSpeak(); drawCall(); }
 $("start").onclick = async()=>{ closeMenus(); await post("/api/reset",{scenario:$("scenario").value}); resetLocal(); if(location.hash!=="#/live") location.hash = "#/live"; refresh(); };
 $("blank").onclick = async()=>{ closeMenus(); await post("/api/reset",{}); resetLocal(); refresh(); };
 $("speed").onchange = e=>post("/api/control",{speed:+e.target.value});
@@ -547,7 +616,7 @@ $("closing").onclick = async()=>{
   if(!Object.keys(S.cameras||{}).length){ toast("No camera connected. Start camera.py first.", "warn"); return; }
   await post("/api/closing", {}); toast("Closing time: cameras are reporting leftover food", "info");
 };
-document.querySelectorAll("[data-ev]").forEach(b=>b.onclick=async()=>{ closeMenus(); await post("/api/event/"+b.dataset.ev); refresh(); });
+document.querySelectorAll("[data-ev]").forEach(b=>b.onclick=async()=>{ closeMenus(); const j = await post("/api/event/"+b.dataset.ev); if(j && j.note) toast(j.note); refresh(); });
 $("feed-filter").onchange = ()=>{ if(S) drawFeed(); };
 $("log-filter").onchange = ()=>{ if(S) drawLog(); };
 $("debate-more").addEventListener("toggle", ()=>{ if(S && view==="live") drawNegotiation(); });
@@ -762,7 +831,9 @@ function drawWire(){
 // ---------- Phone line: after the agents decide, the dispatcher agent calls the shelter agent ----------
 // Both sides speak with ElevenLabs voices (Dispatch and Shelter); a staff member's spoken answer on the
 // shelter phone shows up here too, transcribed by ElevenLabs Scribe.
-let callFor = null, call = null, actx = null;
+let callFor = null, call = null, actx = null, noCall = null;
+// a driver cancelled after the shelter said yes: the agents only replaced the transport, so nobody calls the shelter again
+function callNeeded(n){ return !!(n && n.plan && !n.transport_only); }
 function ringCtx(){ try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); }catch(e){} }
 function ringTone(){
   if(!voiceOn || !actx) return;
@@ -779,7 +850,10 @@ function callSay(who, say){
     if(!voiceOn || !audioOK){ clearTimeout(t); setTimeout(resolve, Math.max(1600, text.length * 45)); return; }
     const silent = () => { clearTimeout(t); setTimeout(resolve, Math.max(1600, text.length * 45)); };
     if(!(S && S.mode && S.mode.voice === "elevenlabs")) return silent();
-    const a = audioFor(who, say); a.currentTime = 0; a.onended = done; a.onerror = silent;
+    const url = `/api/tts?who=${encodeURIComponent(who)}&text=${encodeURIComponent(say)}`;
+    let a = audioFor(who, say);
+    if(a.error){ delete audioCache[url]; a = audioFor(who, say); }   // an earlier fetch failed (e.g. the voice service was busy): try again
+    a.currentTime = 0; a.onended = done; a.onerror = silent;
     a.play().catch(silent);
   });
 }
@@ -794,7 +868,9 @@ function callScript(n){
   const items = (d.food.items || []).join(" and ").toLowerCase();
   const take = reply && (reply.text.match(/take (\d+)/) || [])[1];
   const biz = d.business_name || "a business nearby", when = ampm(n.plan.arrive_hhmm);
-  const ask = `Hi, is this ${shortNp(np)}? … Hey! It's the Uplink dispatcher. So, ${biz} just closed up with ${d.food.servings} servings of ${items}${d.food.needs_cold ? ", and they REALLY need to stay cold" : ""}. ${drv} can have it to you by ${when}. [curious] Any chance you can take it?`;
+  const hello = `Hi, is this ${shortNp(np)}?`;
+  const hi = `Yes, it is! How can I help?`;
+  const ask = `Hey! It's the Uplink dispatcher. So, ${biz} just closed up with ${d.food.servings} servings of ${items}${d.food.needs_cold ? ", and they REALLY need to stay cold" : ""}. ${drv} can have it to you by ${when}. [curious] Any chance you can take it?`;
   const ans = !reply || reply.kind === "accept" ? `[excited] Oh, that's PERFECT timing! Yeah, we can take all ${d.food.servings}. Send it over!`
     : reply.kind === "counter" ? `[sighs] Hmm… we're pretty tight on space tonight. We could take ${take || "some"} of them, though?`
     : `[sighs] Ah, I'm so sorry… we're actually full right now.`;
@@ -802,10 +878,10 @@ function callScript(n){
     : reply.kind === "counter" ? `No problem at all. We'll send you ${take || "what you can take"}, and find a home for the rest. Thanks!`
     : `Totally get it. We'll try somewhere else… thanks anyway!`;
   const ln = (who, side, name, say) => ({who, side, name, say, text: say.replace(/\[[^\]]*\]\s*/g, "")});
-  return {np, lines:[ln("Dispatch", "a", "Uplink dispatcher", ask), ln("Shelter", "b", np, ans), ln("Dispatch", "a", "Uplink dispatcher", close)]};
+  return {np, lines:[ln("Dispatch", "a", "Uplink dispatcher", hello), ln("Shelter", "b", np, hi), ln("Dispatch", "a", "Uplink dispatcher", ask), ln("Shelter", "b", np, ans), ln("Dispatch", "a", "Uplink dispatcher", close)]};
 }
 // generate the call's audio while the debate replays, so the call starts without a pause
-function prefetchCall(n){ if(voiceOn && n && n.plan && S.mode && S.mode.voice === "elevenlabs") try{ callScript(n).lines.forEach(l => audioFor(l.who, l.say)); }catch(e){} }
+function prefetchCall(n){ if(callNeeded(n) && voiceOn && n && n.plan && S.mode && S.mode.voice === "elevenlabs") try{ callScript(n).lines.forEach(l => audioFor(l.who, l.say)); }catch(e){} }
 // One call at a time: a decision that arrives while a call is on the line (say, a re-plan to another shelter)
 // waits its turn instead of talking over it.
 let callQueue = [];
@@ -841,6 +917,10 @@ function releaseHold(seq){ if(seq === null && Date.now() - lastRelease < 2000) r
 const WAVE = "<i></i>".repeat(14);
 function drawCall(){
   const card = $("call-card"); if(!card) return;
+  if(!call && noCall){
+    setHTML("call-card", `<p class="call-idle"><b>No new call.</b> ${esc(noCall.cancelled || "The driver")} cancelled, but ${esc(noCall.plan.np_name)} had already said yes, so the agents only found a new way to get the food there: ${esc(noCall.plan.driver_name)}.</p>`);
+    setHTML("call-tx", ""); return;
+  }
   if(!call){ setHTML("call-card", `<p class="call-idle">No call yet. When the agents choose a shelter, the dispatcher agent calls it here.</p>`); setHTML("call-tx", ""); return; }
   // a staff member who answered on the shelter phone by voice (ElevenLabs Scribe transcribed it)
   const human = (S && S.feed || []).filter(f => f.donation === call.donation && /^\(by voice\)/.test(f.text));

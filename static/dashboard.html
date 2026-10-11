@@ -146,6 +146,7 @@
       </div>
     <div class="panel map-panel">
       <div class="panel-head"><h2><span class="stepno">4–5</span>Delivery</h2><span class="muted small">Labeled pins are shelters in play</span></div>
+      <ul class="map-status" id="map-status" aria-live="polite" aria-label="Where each delivery is"></ul>
       <div id="map" role="img" aria-label="Map of businesses, shelters and drivers"></div>
       <ul class="legend" aria-label="Map legend">
         <li><i class="lg-np"></i>Shelter</li>
@@ -153,7 +154,10 @@
         <li><i class="lg-biz"></i>Business</li>
         <li><i class="lg-on"></i>Driver on a job</li>
         <li><i class="lg-idle"></i>Idle driver</li>
-        <li><i class="lg-line"></i>Route</li>
+        <li><i class="lg-pick"></i>Driver to pickup</li>
+        <li><i class="lg-line"></i>Pickup to shelter</li>
+        <li><i class="lg-plan"></i>Planned, while the shelter is called</li>
+        <li><i class="lg-x"></i>Driver cancelled</li>
       </ul>
     </div>
     </div>

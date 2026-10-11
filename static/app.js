@@ -43,6 +43,10 @@ async function post(url, body){
 const STEPS = ["Received", "Finding a place", "Driver assigned", "Picked up", "Delivered"];
 function stage(d){
   const np = d.plan && d.plan.np_name, drv = d.plan && firstName(d.plan.driver_name);
+  if(d.cancelled && d.keep_np && d.status !== "en_route" && !DONE.includes(d.status)){   // the shelter is still booked
+    const kept = (S.nonprofits.find(n => n.id === d.keep_np) || {}).name || "The shelter";
+    return {step:2, head:"Your driver cancelled. Finding another", sub:`${kept} is still expecting your food.`, tag:"Finding a driver", tone:"warn"};
+  }
   switch(d.status){
     case "delivered": return {step:5, head:"Delivered", sub:`Your food reached ${np || "the shelter"}.`, tag:"Delivered", tone:"good"};
     case "spoiled": case "expired": return {step:0, fail:true, head:"We couldn't deliver this in time", sub:"Please schedule another pickup if you still have the food.", tag:"Not delivered", tone:"bad"};

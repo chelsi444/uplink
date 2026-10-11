@@ -34,13 +34,13 @@ Three test sets:
 | Speed alone | 494 | 16,960 | 325 | $2,298 | 10 |
 | Cost alone | 610 | 16,844 | 315 | **$374** | 11 |
 | Need alone | 843 | 16,611 | 407 | $1,154 | 15 |
-| **Team** | **164** | **17,290** | **459** | $704 | 23 |
+| **Team** | **164** | **17,290** | **458** | $739 | 22 |
 
 - **Least food lost:** 67% less than the best single agent (Speed) and 93% less than the baseline.
 - **Most meals and most shelters:** 2% more meals than the best single agent; 13% more shelters reached than Need alone, the agent whose whole goal is fairness.
 - **Consistent, not lucky:** the team lost the least food, or tied, in **99 of 100** runs. Against the baseline it lost less food in 53 runs, the same in 46, and more in 1.
 - **Each agent alone fails on its blind spot.** Speed spends the most on couriers. Cost is cheapest but trusts unreliable volunteers, so more food spoils when they don't show. Need reaches more shelters but accepts slow, risky trips. Negotiation lets each agent veto the others' blind spots.
-- **The trade-offs we accept:** the team spends 88% more than Cost alone ($704 vs $374), though about the same as the baseline ($719). And it asks a person more often (23 times in 100 runs, vs 10–15 for single agents), because it refuses to force a bad compromise.
+- **The trade-offs we accept:** the team spends 98% more than Cost alone ($739 vs $374) and 3% more than the baseline ($719). Part of that is a promise kept: when a volunteer cancels after a shelter has said yes, the team finds another way to that same shelter (sometimes a paid courier) instead of switching shelters. And it asks a person more often (22 times in 100 runs, vs 10–15 for single agents), because it refuses to force a bad compromise.
 
 The development seeds (1–200) agree: the team lost 229 servings vs 1,320 for the best single agent (83% less) and 5,086 for the baseline (95% less), and never lost more than the baseline in any of the 200 runs.
 

@@ -86,7 +86,7 @@ Open http://localhost:5050/ops and hard-refresh (Cmd+Shift+R).
 
 **5. When they can't agree (25 s).** Run **Irreconcilable goals**: "Sometimes no compromise is acceptable. Instead of forcing one, they ask a person, with a decide-by deadline so the food never spoils waiting." Optional: Demo controls → **Shelter says full** and watch them re-plan, each saying whether it changed its mind.
 
-**6. Evidence (20 s).** Evidence tab: "On 100 scenarios it had never seen, the team lost **82% less food than the simple approach** and **49% less than the best agent working alone**, and lost the least food in 95 of 100. Each agent alone fails on its blind spot; together they veto each other's."
+**6. Evidence (20 s).** Evidence tab: "On 100 scenarios it had never seen, the team lost **93% less food than the simple approach** and **67% less than the best agent working alone**, and lost the least food (or tied) in 99 of 100. Each agent alone fails on its blind spot; together they veto each other's."
 
 **7. Close (10 s).** "Uplink: agents that disagree out loud, never compromise on safety, and ask a human when agreeing would be wrong."
 

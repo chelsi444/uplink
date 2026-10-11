@@ -95,6 +95,22 @@ def test_cancelled_driver_loses_reliability_and_food_is_replanned():
     assert d["status"] == "new"
 
 
+def test_after_a_cancel_the_agents_find_new_transport_to_the_same_shelter_without_a_new_call():
+    w = fresh()
+    d = w.add_donation(dict(PIZZA), "campus-cafe")
+    plan = next(p for p in w.safe_plans(d) if p["driver_type"] == "volunteer")
+    w.assign(d, plan)
+    w.phones[plan["np"]] = 9e18   # the shelter's phone is answered: a fresh booking would ask it again
+    w.live = True
+    w.cancel_driver(plan["driver"])
+    assert d["status"] == "new" and d["keep_np"] == plan["np"] and d["cancelled"]["driver"] == plan["driver"]
+    w.plan(d)
+    n = w.negotiation
+    assert n["transport_only"] and n["plan"]["np"] == plan["np"] and n["plan"]["driver"] != plan["driver"]
+    assert d["status"] == "en_route" and "ask" not in d   # no second call to the shelter
+    assert "keep_np" not in d and "cancelled" not in d
+
+
 def test_new_pantry_is_discoverable_by_capability():
     w = fresh()
     w.add_pantry()

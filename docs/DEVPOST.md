@@ -104,7 +104,7 @@ A shelter says it's full, a driver cancels, a new pantry joins mid-run: the agen
 
 ## Accomplishments that we're proud of
 
-- On **100 random scenarios the system had never seen**, the negotiating team lost **82% less food than a nearest-shelter baseline** and **49% less than the best agent working alone**. It lost the least food (or tied) in **95 of 100** runs, reached **440 shelters vs 386** for the fairness agent alone, and was never worse than the baseline in any run.
+- On **100 random scenarios the system had never seen**, the negotiating team lost **93% less food than a nearest-shelter baseline** and **67% less than the best agent working alone**. It lost the least food (or tied) in **99 of 100** runs, reached **458 shelters vs 407** for the fairness agent alone, and lost more food than the baseline in only 1 run.
 - **Each agent alone fails on its blind spot**: Speed overspends on couriers, Cost trusts volunteers who don't show, Need accepts risky trips. Together they veto each other's blind spots.
 - We disclose the cost: the team spends more than Cost alone ($2,115 vs $1,305), though 28% less than the baseline, and asks a person about once per scenario, because it refuses to force a bad compromise.
 - **16 agents on AGNTCY** make identical decisions to the in-process version, and keep working when an agent is stopped live.

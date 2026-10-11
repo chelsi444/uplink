@@ -9,6 +9,8 @@ With no ELEVENLABS_API_KEY, available() is False and the browser falls back to i
 import hashlib
 import os
 import re
+import threading
+import time
 
 import requests
 
@@ -26,6 +28,7 @@ MODEL = "eleven_v3"   # the most expressive model; reads cues like [excited] or 
 TAG = re.compile(r"\[[^\]]*\]\s*")
 
 _cache = {}
+_slots = threading.BoundedSemaphore(2)   # free ElevenLabs plans allow 2 requests at once; more get 429
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".tts_cache")
 
 
@@ -68,11 +71,16 @@ def speak(who, text):
         with open(path, "rb") as f:
             _cache[h] = f.read()
         return _cache[h]
-    r = requests.post(f"{API}/text-to-speech/{vid}", headers={**_headers(), "accept": "audio/mpeg"},
-                      params={"output_format": "mp3_44100_64"},
-                      json={"text": text, "model_id": model,
-                            "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}},
-                      timeout=TIMEOUT)
+    for attempt in range(4):   # queue behind the plan's concurrency limit, and retry if ElevenLabs is busy
+        with _slots:
+            r = requests.post(f"{API}/text-to-speech/{vid}", headers={**_headers(), "accept": "audio/mpeg"},
+                              params={"output_format": "mp3_44100_64"},
+                              json={"text": text, "model_id": model,
+                                    "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}},
+                              timeout=TIMEOUT)
+        if r.status_code != 429:
+            break
+        time.sleep(0.8 * (attempt + 1))
     r.raise_for_status()
     _cache[h] = r.content
     try:

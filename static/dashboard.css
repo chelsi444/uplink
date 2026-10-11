@@ -316,6 +316,9 @@ ul.plain{margin:0;padding-left:1.1rem;color:var(--ink-2);font-size:var(--t-sm);d
 .lg-on{width:1rem;height:1rem;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 0 0 1px var(--brand)}
 .lg-idle{width:.55rem;height:.55rem;border-radius:50%;background:var(--line-2)}
 .lg-line{width:1.4rem;height:4px;border-radius:2px;background:var(--brand)}
+.lg-pick{width:1.4rem;height:4px;border-radius:2px;background:#93c5fd}
+.lg-plan{width:1.4rem;height:0;border-top:3px dotted #2563eb;opacity:.7}
+.lg-x{width:1.4rem;height:0;border-top:3px dashed #dc2626;opacity:.8}
 .mp{position:relative;width:16px;height:16px}
 .mp i{position:absolute;inset:2px;border-radius:50%;background:var(--muted);border:2px solid #fff;box-shadow:0 1px 3px rgba(15,23,42,.5)}
 .mp span{display:none;position:absolute;left:20px;top:-1px;white-space:nowrap;font:600 12px/1.2 var(--font);color:#0f172a;background:rgba(255,255,255,.92);padding:2px 6px;border-radius:5px;box-shadow:0 1px 3px rgba(15,23,42,.25)}
@@ -325,14 +328,35 @@ ul.plain{margin:0;padding-left:1.1rem;color:var(--ink-2);font-size:var(--t-sm);d
 .mp.full span{display:block;color:var(--bad)}
 .mb{position:relative;width:12px;height:12px}
 .mb i{position:absolute;inset:0;background:var(--faint);border:2px solid #fff;border-radius:3px;box-shadow:0 1px 2px rgba(15,23,42,.4)}
-.mb span{display:none;position:absolute;left:16px;top:-2px;white-space:nowrap;font:600 11px/1.2 var(--font);color:#334155;background:rgba(255,255,255,.9);padding:1px 5px;border-radius:4px}
+.mb span{display:none;position:absolute;right:16px;top:-2px;white-space:nowrap;font:600 11px/1.2 var(--font);color:#334155;background:rgba(255,255,255,.9);padding:1px 5px;border-radius:4px}
 .mb.inv span{display:block}
 .mb.inv i{background:#0f172a}
 .drv{border-radius:50%}
 .drv.on{width:28px;height:28px;background:var(--brand);color:#fff;display:grid;place-items:center;font:700 13px var(--font);border:3px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.45)}
 .drv.idle{width:10px;height:10px;margin:1px;background:var(--line-2);border:1px solid #fff}
 .drv.off{width:8px;height:8px;margin:2px;background:var(--line);border:1px solid #fff;opacity:.7}
-.arrow{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:16px solid #0b5a54;filter:drop-shadow(0 0 2px #fff)}
+.arrow{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:16px solid #1e40af;filter:drop-shadow(0 0 2px #fff)}
+.arrow.plan{opacity:.55}
+.arrow.to-pick{border-bottom-color:#3b82f6;transform-origin:center;scale:.8}
+.drv-mk{transition:transform .95s linear}
+#map.no-glide .drv-mk,.leaflet-zoom-anim .drv-mk{transition:none}
+.pick-pulse{width:34px;height:34px;border-radius:50%;border:2px solid var(--brand);opacity:0;animation:pick-pulse 1.6s ease-out infinite}
+.pick-pulse.stuck,.pick-pulse.awaiting_human{border-color:#d97706}
+@keyframes pick-pulse{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pick-pulse{animation:none;opacity:.6;transform:scale(.6)}.drv-mk{transition:none}}
+.x-mk{width:20px;height:20px;border-radius:50%;background:#fff;color:#dc2626;border:2px solid #dc2626;display:grid;place-items:center;font:800 11px/1 var(--font);box-shadow:0 1px 3px rgba(15,23,42,.35)}
+.map-status{list-style:none;margin:0 0 .6rem;padding:0;display:grid;gap:.3rem;min-height:1.6rem}
+.map-status li{display:flex;align-items:center;gap:.5rem;font-size:.92rem;line-height:1.35}
+.map-status li i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.map-status li.think i{background:var(--brand);animation:ms-blink 1.2s ease-in-out infinite}
+.map-status li.call i{background:#7c3aed;animation:ms-blink 1.2s ease-in-out infinite}
+.map-status li.go i{background:#2563eb}
+.map-status li.wait i{background:#d97706}
+.map-status li.bad{color:#b91c1c}.map-status li.bad i{background:#dc2626}
+.map-status li.idle,.map-status li.more{color:var(--muted)}
+.map-status li.done i{background:#16a34a}
+@keyframes ms-blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.map-status li i{animation:none}}
 
 /* ---------- color discipline: neutral + one accent; agent colors only identify agents ---------- */
 .who{color:var(--ink-2)!important}

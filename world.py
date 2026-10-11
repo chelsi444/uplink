@@ -341,6 +341,16 @@ class World:
         if self.policy == "baseline":
             return []
         plans = self.safe_plans(d)
+        keep = d.get("keep_np")
+        if keep and self.policy == "agents":
+            # the driver cancelled but the shelter already said yes: only the transport is open
+            same = [p for p in plans if p["np"] == keep]
+            if same:
+                plans = same
+            else:
+                d.pop("keep_np", None)
+                self.say("World", f"{d['id']}: no other way gets it to {self.nonprofits[keep]['name']} in time; "
+                         "looking at every shelter again.", "event", d["id"])
         if self.policy == "agents" and d["food"].get("allergens_unverified") and d["status"] == "new":
             relaxed = self.safe_plans(d, log=False, food=dict(d["food"], allergens_unverified=False))
             gap = agents.evidence_gap(self, d, plans, relaxed)
@@ -395,8 +405,11 @@ class World:
         info = d.pop("new_info", None)
         if info:
             self._mark_new_info(d, result, info)
+        # the shelter already said yes and the agents only had to replace the driver: no new call to the shelter
+        transport_only = bool(result.get("plan") and d.get("keep_np") and result["plan"]["np"] == d["keep_np"])
         self.negotiation = dict(result, donation=d["id"], food=", ".join(d["food"]["items"]),
-                                time=hhmm(self.now), seq=next(self._neg_ids))
+                                time=hhmm(self.now), seq=next(self._neg_ids),
+                                transport_only=transport_only, cancelled=(d.get("cancelled") or {}).get("name"))
         self.negotiations.append(self.negotiation)
         self.negotiations = self.negotiations[-12:]
         for rnd in result["rounds"]:
@@ -447,6 +460,14 @@ class World:
                 new = self.split(d, plan["servings"], plan["np_name"])
                 if new:
                     new["skip"].append(plan["np"])
+            self.assign(d, plan)
+            return
+        if transport_only:
+            self.say("Result", f"{label}: {plan['driver_name']} takes {d['id']} to {plan['np_name']} instead, arrives "
+                     f"{plan['arrive_hhmm']}" + (f", ${plan['cost']:.2f}" if plan["cost"] else ", free")
+                     + f". {plan['np_name']} already said yes, so no new call.", "result", d["id"])
+            self.net(d, "coordinators", plan["driver_name"], "award",
+                     f"{label}. Pick up {d['id']} and take it to {plan['np_name']}, arriving {plan['arrive_hhmm']}.")
             self.assign(d, plan)
             return
         self.say("Result", f"{label}: {short_plan(plan)}, arrives {plan['arrive_hhmm']}"
@@ -525,8 +546,8 @@ class World:
             new = self.split(d, plan["servings"], plan["np_name"])
             if new:
                 new["skip"].append(plan["np"])   # that shelter already said how much it can take
-        if plan.get("join") or not self.phone_online(plan["np"]):
-            self.assign(d, plan)
+        if plan.get("join") or not self.phone_online(plan["np"]) or plan["np"] == d.get("confirmed_np"):
+            self.assign(d, plan)   # no phone answering, or this shelter already said yes to this food
             return
         dr = self.drivers[plan["driver"]]
         if dr["status"] == "free":
@@ -607,7 +628,9 @@ class World:
         d["t_pick"] = self.now + plan["pick"]
         d["t_arr"] = self.now + plan["dur"]
         d["dest"] = pos(self.nonprofits[plan["np"]])
-        d.pop("locked_driver", None)
+        d["confirmed_np"] = plan["np"]   # the shelter is booked for this food
+        for k in ("locked_driver", "keep_np", "cancelled"):
+            d.pop(k, None)
         self.decide(d, "allowed", f"{short_plan(plan)} (arrives {plan['arrive_hhmm']}, {plan['slack']} min before unsafe)")
 
     def get(self, did):
@@ -759,10 +782,15 @@ class World:
                     self.weights[agent] = round(self.weights[agent] + WEIGHT_BONUS, 2)
                     self.say("Adapt", f"{agent} warned that {dr['name']} might not show, and was right. "
                              f"{agent}'s vote now weighs {self.weights[agent]}.", "adapt", d["id"])
+                np_name = d["plan"]["np_name"]
+                d["keep_np"] = d["plan"]["np"]   # the shelter already said yes: find another way to get it there
+                d["cancelled"] = {"driver": driver_id, "name": dr["name"], **dict(dr.get("pos", pos(dr)))}
                 d["status"] = "new"
                 d["plan"] = None
-                d["new_info"] = f"{dr['name']} cancelled; reliability dropped from {old:.0%} to {dr['reliability']:.0%}"
-                self.say("World", f"{d['id']} needs a new driver.", "event", d["id"])
+                d["new_info"] = (f"{dr['name']} cancelled; reliability dropped from {old:.0%} to {dr['reliability']:.0%}. "
+                                 f"{np_name} already agreed to take the food, so only the transport is open")
+                self.say("World", f"{d['id']}: {np_name} is still expecting it. The agents are working out another "
+                         "way to get it there.", "event", d["id"])
 
     def add_pantry(self):
         n = load("new_pantry.json")
@@ -912,7 +940,7 @@ class World:
         dons = []
         for d in self.donations:
             x = {k: d.get(k) for k in ("id", "food", "business_name", "status", "plan", "options", "origin", "dest",
-                                       "picked", "why", "asked_about")}
+                                       "picked", "why", "asked_about", "keep_np", "cancelled")}
             x["safe_until"] = hhmm(d["safe_until"])
             x["minutes_left"] = d["safe_until"] - self.now
             if d["status"] == "awaiting_human" and d.get("options"):

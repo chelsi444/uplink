@@ -1,6 +1,6 @@
 # Uplink: demo script for three speakers
 
-About **4½ minutes**, plus optional extensions if you have time and a 2-minute cut if you don't. The key terms judges listen for are in **bold** in the lines and listed in the checklist at the end.
+About **4¾ minutes**, plus optional extensions if you have time and a 2-minute cut if you don't. The key terms judges listen for are in **bold** in the lines and listed in the checklist at the end.
 
 | Speaker | Owns | Drives the laptop during |
 | --- | --- | --- |
@@ -139,19 +139,31 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 `[PAUSE: let the whole call play, about 15 seconds. Don't talk over it.]`
 
+*(While the call plays, the driver quietly opens Demo controls and presses **Driver cancels**. A small note says the courier will cancel when the call ends. Don't mention it yet.)*
+
 > Two agents, two voices from **ElevenLabs Eleven v3**, their most expressive **text-to-speech** model, with real pauses and emotion. / And the shelter's answer is its agent's **real** reply. / Shelter staff can also answer by **voice** from their phone.
 >
 > *Only* after the call does the driver set off.
 
-**On screen:** **④–⑤ Delivery** (bottom right, beside the call): the courier's dot leaves the restaurant toward Walnut Avenue.
+*(The driver scrolls down to **④–⑤ Delivery**, beside the call. Hand to Sara.)*
 
-> *(Point at the map.)* There it goes.
+---
+
+### 3:15 · Sara · New information: the courier cancels
+
+> But plans break. / The courier just **cancelled**.
+
+**On screen:** a red dashed line and ✕ where the courier was; the map line says "Rapid Courier A cancelled… Walnut Avenue still expects it". The agents deliberate again: "New information… only the transport is open."
+
+> That's **new information**, / and every agent re-argues with it. / Walnut Avenue already said **yes**, so nobody calls them again: / the agents only decide how to get the food **there**. / *(Point at the result.)* A new driver, / the same shelter, / decided by the same three agents. *(In our test runs they picked the free volunteer, all three agreeing; say what's on screen.)*
+
+**On screen:** the Phone line says **"No new call"**; Sam's route appears on the map.
 
 *(Hand to Haatim.)*
 
 ---
 
-### 3:25 · Haatim · When agents can't agree (the heart of Level 3)
+### 3:35 · Haatim · When agents can't agree (the heart of Level 3)
 
 *(The driver scrolls back up; Demo controls → **Irreconcilable goals** → **Run scenario**.)*
 
@@ -171,27 +183,27 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 *(Click **Approve** on an option.)*
 
-> And when the world changes, a shelter fills up, a driver cancels, / they **re-plan**, each one says whether it **changed its mind**, / and an agent that warned about an unreliable driver **gains vote weight**.
+> And like you saw with the courier, when the world changes, a shelter fills up, a driver cancels, / they **re-plan**, each one says whether it **changed its mind**, / and an agent that warned about an unreliable driver **gains vote weight**.
 
 ---
 
-### 4:05 · Haatim · Evidence
+### 4:15 · Haatim · Evidence
 
 *(The driver clicks the **Evidence** tab.)*
 
-**On screen:** Evidence: "82% less food lost", "49% less than the best single agent", "95 of 100".
+**On screen:** Evidence: "93% less food lost", "67% less than the best single agent", "99 of 100".
 
 > Does arguing actually **help**? / We tested it on **100** random scenarios the system had **never seen**: driver no-shows, full shelters, new pantries.
 >
-> Compared to the simple approach, nearest shelter and nearest driver, / the team lost **82% less** food.
+> Compared to the simple approach, nearest shelter and nearest driver, / the team lost **93% less** food.
 >
-> And here's the part we're proudest of: / compared to **any one agent deciding alone**, / the team lost **49% less**. / Speed alone overspends. / Cost alone trusts volunteers who don't show. / Need alone takes risky trips.
+> And here's the part we're proudest of: / compared to **any one agent deciding alone**, / the team lost **67% less**. / Speed alone overspends. / Cost alone trusts volunteers who don't show. / Need alone takes risky trips.
 >
 > **Together, they veto each other's blind spots.**
 
 ---
 
-### 4:30 · Sara · Close
+### 4:40 · Sara · Close
 
 **On screen:** go back to the Live tab, showing the result and the agent cards.
 
@@ -224,7 +236,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 | 1:25 | Haatim | ① Agent network graph | "Sixteen agents, each its own process, on **AGNTCY** A2A over NATS. Safety is never negotiated." |
 | 1:40 | Chelsi | ③ Phone line | Let 5 seconds of the call play: "the dispatcher **calls** the shelter." |
 | 1:45 | Haatim | Decisions (Irreconcilable already run) | "When they **can't** agree, they **escalate to a human** with a decide-by deadline." |
-| 1:52 | Haatim | Evidence | "**82%** less food lost than the simple approach; **49%** less than any one agent alone." |
+| 1:52 | Haatim | Evidence | "**93%** less food lost than the simple approach; **67%** less than any one agent alone." |
 | 2:00 | Sara | Live | The closing line. |
 
 ---
@@ -274,4 +286,4 @@ Make sure each of these is said out loud at least once. They're what the Cisco a
 | ElevenLabs Scribe (speech-to-text) | Chelsi | Say it |
 | ElevenLabs Eleven v3 (text-to-speech), dispatcher agent calls the shelter agent | Chelsi | the phone call |
 | Claude (Anthropic): menu matching, photo/video counting, each agent's arguments | Chelsi, Sara | Say it, the agents argue |
-| 82% less food lost than the baseline; 49% less than the best agent alone; 100 unseen scenarios | Haatim | evidence |
+| 93% less food lost than the baseline; 67% less than the best agent alone; 100 unseen scenarios | Haatim | evidence |

@@ -79,6 +79,10 @@ def clock_loop():
             w = W()
             if state["paused"] or w.busy or time.time() < state.get("hold_until", 0):
                 continue   # paused, agents deliberating, or the dispatcher's call is still playing on /ops
+            drv = state.pop("cancel_after_call", None)
+            if drv:   # "Driver cancels" was pressed during the call: the driver cancels as they would set off
+                w.cancel_driver(drv)
+                continue
             w.tick(plan_inline=False)
 
 
@@ -215,6 +219,7 @@ def api_reset():
     with lock:
         state["world"] = World(sc, live=True)
         state["hold_until"] = 0
+        state.pop("cancel_after_call", None)
         state["world"].mesh = MESH
         state["paused"] = False
     if MESH:
@@ -388,6 +393,10 @@ def api_event(kind):
                 if not pending:
                     return jsonify(error="No driver is on the way to a pickup right now."), 400
                 drv = pending[-1]["plan"]["driver"]
+            if time.time() < state.get("hold_until", 0):
+                # the dispatcher's call is still playing on /ops: cancel once it ends, so the call isn't cut off
+                state["cancel_after_call"] = drv
+                return jsonify(ok=True, queued=True, note=f"{w.drivers[drv]['name']} will cancel when the call ends.")
             w.cancel_driver(drv)
         elif kind == "new_pantry":
             w.add_pantry()

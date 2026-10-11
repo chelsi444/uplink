@@ -198,7 +198,7 @@ python3 tests/test_mesh.py      # starts the real agent processes on ports 7600+
 
 **How the team's negotiations ended:** consensus 42, majority 5, unacceptable 3, insufficient evidence 2, irreconcilable 1
 
-With shelter and driver agents, the team fed the most shelters (23) and lost no food, but it is not the cheapest policy on these scripted cases ($188.80 vs $93.18 for Cost alone). Part of the difference is *Standoff*: with weekend surge pricing every courier trip crosses Cost's red line, so the agents ask a coordinator, and the stand-in coordinator's choice splits the produce across two paid trips. On the 100 random runs below, the team spends about the same as the baseline.
+With shelter and driver agents, the team fed the most shelters (23) and lost no food, but it is not the cheapest policy on these scripted cases ($188.80 vs $93.18 for Cost alone). Part of the difference is *Standoff*: with weekend surge pricing every courier trip crosses Cost's red line, so the agents ask a coordinator, and the stand-in coordinator's choice splits the produce across two paid trips. On the 100 random runs below, the team spends 3% more than the baseline, and 11% less per meal delivered.
 
 **100 random lunch rushes the rules were never tuned on** (`python3 -c "import scenarios; print(scenarios.compare_random(100, 1001)['totals'])"`):
 
@@ -206,7 +206,7 @@ With shelter and driver agents, the team fed the most shelters (23) and lost no 
 | --- | --- | --- | --- |
 | Meals delivered safely | 15,039 | 17,290 | +15% |
 | Servings lost | 2,415 | 164 | −93% |
-| Money spent on paid drivers | $719 | $704 | −2% (−15% per meal) |
+| Money spent on paid drivers | $719 | $739 | +3% (−11% per meal) |
 | Runs where agents lost more food | | 1 of 100 | |
 
 The dashboard's **Evidence** page shows these same 100 held-out runs (seeds 1001–1100), computed live when the app starts.

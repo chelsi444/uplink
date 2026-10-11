@@ -46,7 +46,8 @@ Open http://localhost:5050/ops and hard-refresh (Cmd+Shift+R).
 
 - [ ] Agent network badge: **AGNTCY · A2A over NATS · 16 agent processes**
 - [ ] Demo controls → **Voices** on, laptop volume up
-- [ ] Run **Majority with dissent**: the debate streams in, ends "Majority 2 of 3 (Cost disagrees, kept on record)", the dispatcher calls, then the driver moves on the map
+- [ ] Run **Majority with dissent**: the debate streams in, ends "Majority 2 of 3 (Cost disagrees, kept on record)", the dispatcher calls (you hear it), then the driver moves on the map
+- [ ] Click anywhere on the page once before the demo: browsers only play sound after a click
 - [ ] Customer site (http://localhost:5050) → Schedule a pickup → **Say it**: the mic works (allow microphone access)
 - [ ] **Photo / video**: one real photo of food reads correctly
 - [ ] Close other tabs and notifications (Do Not Disturb on)
@@ -100,7 +101,7 @@ Open http://localhost:5050/ops and hard-refresh (Cmd+Shift+R).
 | Agents ran inside one program | 16 agents, each its own process, on AGNTCY A2A over NATS; identical decisions, 0 failed messages |
 | One way to donate: a photo | Say it (ElevenLabs Scribe + Claude), photo, video, or tap the menu |
 | The debate appeared all at once at the end | Streams live as each agent speaks; the clock waits so no food-safety time is lost |
-| Silent decisions | ElevenLabs voices for each agent, plus a dispatcher-to-shelter phone call |
+| Silent decisions | A dispatcher-to-shelter phone call in expressive ElevenLabs v3 voices |
 | The map raced ahead of the story | The driver sets off after the call |
 | One busy screen for everyone | A simple customer site for businesses; a separate ops dashboard for judges |
 | "Need never matters" | Data: Need's first choice became the decision most often; it vetoes unfair splits |
@@ -114,7 +115,7 @@ Open http://localhost:5050/ops and hard-refresh (Cmd+Shift+R).
 - **"Why multiple agents instead of one model?"** We tested it: on 100 unseen scenarios each agent alone loses 1,336 to 1,726 servings; the team loses 676. Each one catches the others' blind spot.
 - **"What's real and what's simulated?"** Real: the negotiation, the safety rules, Claude reading photos, video and speech, ElevenLabs voices, the AGNTCY agents. Simulated: the city, the drivers' movement and the clock.
 - **"How do you use AGNTCY?"** Every shelter, driver and negotiator is an A2A agent on NATS with an AgentCard and an OASF record (`/agntcy/records`). A test replays every scenario in-process and over A2A: identical decisions.
-- **"How do you use ElevenLabs?"** Speech-to-text (Scribe) for voice donations and shelter answers; text-to-speech (Flash v2.5) with a distinct voice per agent for the debate and the dispatcher's phone call.
+- **"How do you use ElevenLabs?"** Speech-to-text (Scribe) for voice donations and shelter answers; text-to-speech (Eleven v3) for the dispatcher agent's phone call to the shelter agent, with natural pauses and emotion.
 - **"Does it cost more?"** Yes, compared with Cost alone ($2,115 vs $1,305 over 100 runs). It's still 28% cheaper than the simple approach, and it loses far less food. We disclose it.
 
 ---

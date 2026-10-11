@@ -25,7 +25,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 1. App running from `~/uplink`; the terminal shows **Claude key OK**, **Voice: ElevenLabs** and **16 agents … AGNTCY A2A over NATS**. Then hide the terminal.
 2. Browser, full screen (Cmd+Ctrl+F), zoom 110% if the room is big. Only two tabs, in this order:
    - **Tab 1:** http://localhost:5050/#/schedule with **Donating as: Pizza My Heart (Pacific Ave)** selected and the **Say it** tab open. Test the mic once (allow microphone access), then refresh.
-   - **Tab 2:** http://localhost:5050/ops in dark mode. Under Demo controls: **Empty world** (so it's clean), **Voices on**, and **Majority with dissent** selected in the scenario list but not run yet.
+   - **Tab 2:** http://localhost:5050/ops in dark mode. Under Demo controls: **Empty world** (so it's clean), **Voices on** (the phone call is the only thing spoken), and **Majority with dissent** selected in the scenario list but not run yet. Click once anywhere on the page: browsers only play sound after a click.
 3. Laptop volume at about 70%, Do Not Disturb on, notifications off, phone silenced.
 4. Scroll Tab 2 to the top. The Negotiation panel should show the three agents and their goals, with no donation yet.
 
@@ -35,7 +35,7 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ### 0:00 · Sara · The problem
 
-**On screen:** Tab 2, the top of `/ops`: the three agent cards (Speed, Cost, Need) and the empty Agent network.
+**On screen:** Tab 2, `/ops`. Top left, **① Agent network** (empty); top right, **② Negotiation** with the three agent cards (Speed, Cost, Need) and their goals.
 
 > Hi, we're Sara, Chelsi and Haatim, and this is **Uplink**.
 >
@@ -91,11 +91,11 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 *(The driver: Demo controls → **Majority with dissent** → **Run scenario**.)*
 
-**On screen:** "Agents are deliberating…". Proposals stream into the Negotiation panel one by one, with voices on.
+**On screen:** the current donation appears at the top. **② Negotiation** (top right) says "Agents are deliberating…" and proposals stream in one by one, while **① Agent network** (top left) lights up.
 
-`[PAUSE: let the first proposals play out loud, about 5 seconds]`
+`[PAUSE: let the first proposals appear, about 5 seconds]`
 
-> Listen to them. / **Speed** wants the reliable paid courier. / **Cost** wants the free volunteer. / And **Need** wants Walnut Avenue, the shelter that's waited **five days**.
+> Watch them. / **Speed** wants the reliable paid courier. / **Cost** wants the free volunteer. / And **Need** wants Walnut Avenue, the shelter that's waited **five days**.
 
 **On screen:** objections appear in red.
 
@@ -117,9 +117,9 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ### 2:20 · Haatim · How it's built: real agents, real messages
 
-**On screen:** the **Agent network** graph (top right) lit up: business → shelter agents → driver agents → coordinators.
+**On screen:** **① Agent network** (top left) lit up: business → shelter agents → driver agents → coordinators, with the **Message log** under it.
 
-> Everything you just watched is **real message passing**. / *(Point at the graph.)* Every shelter, every driver, and each of the three negotiators is its **own agent**, / running as its **own process**: **sixteen** of them.
+> Everything you just watched is **real message passing**. / *(Point at the graph, then the message log under it.)* Every shelter, every driver, and each of the three negotiators is its **own agent**, / running as its **own process**: **sixteen** of them.
 >
 > They talk over **Cisco's AGNTCY** framework, / the **A2A** protocol on **NATS**. / *(Point at the badge "AGNTCY · A2A over NATS · 16 agent processes".)*
 >
@@ -133,19 +133,17 @@ Speak to the judges, not the screen. Point at the screen with your hand when a l
 
 ### 2:55 · Chelsi · The phone call (ElevenLabs)
 
-**On screen:** the **Phone line** panel under the graph: "Ringing…", then the dispatcher and the shelter talking, with the transcript filling in. The status pill at the top reads "Dispatcher calling · driver waits".
+**On screen:** scroll down to **③ Phone line** (bottom left): "Ringing…", then the dispatcher and the shelter talking, with the transcript filling in. The status pill at the top reads "Dispatcher calling · driver waits".
 
 > Once they decide, / a **dispatcher agent** calls the shelter. / Listen.
 
 `[PAUSE: let the whole call play, about 15 seconds. Don't talk over it.]`
 
-> Two agents, two **ElevenLabs** voices. / And the shelter's answer is its agent's **real** reply. / Shelter staff can also answer by **voice** from their phone.
+> Two agents, two **ElevenLabs** voices, with real pauses and emotion. / And the shelter's answer is its agent's **real** reply. / Shelter staff can also answer by **voice** from their phone.
 >
 > *Only* after the call does the driver set off.
 
-*(The driver scrolls down to the map.)*
-
-**On screen:** the map: the courier's dot leaves the restaurant toward Walnut Avenue; the message log on the left.
+**On screen:** **④–⑤ Delivery** (bottom right, beside the call): the courier's dot leaves the restaurant toward Walnut Avenue.
 
 > *(Point at the map.)* There it goes.
 
@@ -207,11 +205,11 @@ When "Asking a coordinator" appears, click **Decisions**:
 
 | Time | Who | Screen | Say |
 | --- | --- | --- | --- |
-| 0:00 | Sara | `/ops`, the three agent cards | The problem, in two sentences; "food rescue is where agents **should** disagree." |
+| 0:00 | Sara | `/ops`, ② the three agent cards | The problem, in two sentences; "food rescue is where agents **should** disagree." |
 | 0:20 | Chelsi | Tab 1 → **Say it** | Say the order; "**ElevenLabs** heard it, **Claude** matched our menu." Confirm. |
 | 0:50 | Sara | `/ops` → Majority with dissent | Name the three goals and red lines; narrate the objections; "Majority 2 of 3, dissent **on record**." |
-| 1:25 | Haatim | Agent network graph | "Sixteen agents, each its own process, on **AGNTCY** A2A over NATS. Safety is never negotiated." |
-| 1:40 | Chelsi | Phone line | Let 5 seconds of the call play: "the dispatcher **calls** the shelter." |
+| 1:25 | Haatim | ① Agent network graph | "Sixteen agents, each its own process, on **AGNTCY** A2A over NATS. Safety is never negotiated." |
+| 1:40 | Chelsi | ③ Phone line | Let 5 seconds of the call play: "the dispatcher **calls** the shelter." |
 | 1:50 | Haatim | Evidence | "**82%** less food lost than the simple approach; **49%** less than any one agent alone." |
 | 2:00 | Sara | Live | The closing line. |
 
